@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Aayush & Durva · शुभ विवाह</title>
+  <meta name="description" content="Aayush & Durva are getting married — 19 & 20 February 2027, Vrindavan Palace, Jaipur." />
+  <meta name="theme-color" content="#3b0710" />
+
+  <!-- Link preview on WhatsApp / social -->
+  <meta property="og:title" content="Aayush & Durva · शुभ विवाह" />
+  <meta property="og:description" content="19 & 20 February 2027 · Vrindavan Palace, Jaipur. Tap to open your invitation." />
+  <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="locked">
+
+  <!-- ░░ Opening gate: palace doors ░░ -->
+  <div class="gate" id="gate" role="button" tabindex="0" aria-label="Tap to open the invitation">
+    <div class="gate-mandala" data-mandala></div>
+    <p class="gate-top" lang="hi">॥ शुभ विवाह ॥</p>
+    <div class="doorway">
+      <div class="door-light"></div>
+      <div class="door door-left"><div class="door-panel"></div><span class="knocker"></span></div>
+      <div class="door door-right"><div class="door-panel"></div><span class="knocker"></span></div>
+      <div class="seal" aria-hidden="true"><span data-mono="0">A</span><i></i><span data-mono="1">D</span></div>
+    </div>
+    <p class="gate-hint">Tap to open</p>
+    <p class="gate-names" data-names>Aayush & Durva</p>
+  </div>
+
+  <canvas class="petals" id="petals" aria-hidden="true"></canvas>
+
+  <!-- ░░ Sticky nav ░░ -->
+  <nav class="nav" id="nav" aria-label="Sections">
+    <a class="nav-mono" href="#home" data-monogram>A ✦ D</a>
+    <div class="nav-links">
+      <a href="#events">Events</a>
+      <a href="#story">Our Story</a>
+      <a href="#quiz">Quiz</a>
+      <a href="#venue">Venue</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ░░ Hero ░░ -->
+    <section class="hero" id="home">
+      <div class="toran" id="toran" aria-hidden="true"></div>
+      <div class="hero-mandala" data-mandala aria-hidden="true"></div>
+
+      <div class="hero-arch reveal">
+        <svg class="arch-svg" viewBox="0 0 400 600" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="archFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#7a1424" />
+              <stop offset="1" stop-color="#4a0912" />
+            </linearGradient>
+            <linearGradient id="goldStroke" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#f6e2a6" />
+              <stop offset=".5" stop-color="#c9a24a" />
+              <stop offset="1" stop-color="#8f6a22" />
+            </linearGradient>
+          </defs>
+          <path d="M10,600 V250 C10,140 110,90 160,55 C185,38 195,20 200,6 C205,20 215,38 240,55 C290,90 390,140 390,250 V600 Z" fill="url(#archFill)" stroke="url(#goldStroke)" stroke-width="3" />
+          <path d="M24,600 V254 C24,152 118,104 166,70 C188,54 197,38 200,26 C203,38 212,54 234,70 C282,104 376,152 376,254 V600" fill="none" stroke="url(#goldStroke)" stroke-width="1.2" opacity=".8" />
+        </svg>
+        <div class="hero-inner">
+          <p class="invocation" lang="hi" data-bind="hero.invocation"></p>
+          <p class="hero-line" data-bind="hero.line"></p>
+          <h1 class="names">
+            <span data-bind="couple.groom"></span>
+            <span class="amp">&amp;</span>
+            <span data-bind="couple.bride"></span>
+          </h1>
+          <p class="hindi-title" lang="hi" data-bind="hero.hindiTitle"></p>
+          <div class="hero-rule" aria-hidden="true"></div>
+          <p class="hero-date" data-bind="hero.dates"></p>
+          <p class="hero-place" data-bind="hero.place"></p>
+        </div>
+      </div>
+
+      <div class="countdown reveal" id="countdown" aria-live="off"></div>
+      <a class="scroll-cue" href="#events" aria-label="Scroll to events"><span></span></a>
+    </section>
+
+    <!-- ░░ Events ░░ -->
+    <section class="section ivory" id="events">
+      <header class="sec-head reveal">
+        <p class="sec-hi" lang="hi">कार्यक्रम</p>
+        <h2>The Celebrations</h2>
+        <div class="ornament" aria-hidden="true"></div>
+        <p class="sec-sub">Tap a card to see the theme &amp; dress code</p>
+      </header>
+      <div class="days" id="days"></div>
+    </section>
+
+    <!-- ░░ Love story ░░ -->
+    <section class="section maroon" id="story">
+      <header class="sec-head reveal">
+        <p class="sec-hi" lang="hi">हमारी कहानी</p>
+        <h2>Our Love Story</h2>
+        <div class="ornament" aria-hidden="true"></div>
+      </header>
+      <div class="timeline" id="timeline">
+        <div class="timeline-line"><span class="timeline-fill" id="timelineFill"></span></div>
+      </div>
+    </section>
+
+    <!-- ░░ Quiz ░░ -->
+    <section class="section ivory" id="quiz">
+      <header class="sec-head reveal">
+        <p class="sec-hi" lang="hi">पहेली</p>
+        <h2>How Well Do You Know Us?</h2>
+        <div class="ornament" aria-hidden="true"></div>
+      </header>
+      <div class="scroll-card reveal" id="quizCard"></div>
+    </section>
+
+    <!-- ░░ Venue ░░ -->
+    <section class="section maroon" id="venue">
+      <header class="sec-head reveal">
+        <p class="sec-hi" lang="hi">स्थान</p>
+        <h2>The Venue</h2>
+        <div class="ornament" aria-hidden="true"></div>
+      </header>
+      <div class="venue reveal">
+        <div class="map-arch">
+          <iframe id="mapFrame" title="Venue map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+        <div class="venue-info">
+          <h3 data-bind="venue.name"></h3>
+          <p class="venue-address" data-bind="venue.address"></p>
+          <p class="venue-note" data-bind="venue.note"></p>
+          <div class="btn-row">
+            <a class="btn btn-gold" id="directionsBtn" target="_blank" rel="noopener">Get Directions</a>
+            <button class="btn btn-ghost" id="copyAddress" type="button">Copy Address</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░ Contact ░░ -->
+    <section class="section ivory" id="contact">
+      <header class="sec-head reveal">
+        <p class="sec-hi" lang="hi">संपर्क</p>
+        <h2>For Any Help</h2>
+        <div class="ornament" aria-hidden="true"></div>
+      </header>
+      <div class="contacts" id="contacts"></div>
+    </section>
+
+    <!-- ░░ Closing ░░ -->
+    <footer class="closing" id="closing">
+      <div class="closing-mandala" data-mandala aria-hidden="true"></div>
+      <p class="closing-hi reveal" lang="hi" data-bind="closing.hindi"></p>
+      <p class="closing-names reveal"><span data-bind="couple.groom"></span> <span class="amp">&amp;</span> <span data-bind="couple.bride"></span></p>
+      <p class="closing-line reveal" data-bind="closing.line"></p>
+      <p class="closing-from reveal" data-bind="closing.from"></p>
+      <p class="closing-tip">✿ Psst — double-tap anywhere for a shower of petals ✿</p>
+    </footer>
+  </main>
+
+  <button class="music-btn" id="musicBtn" type="button" aria-label="Pause music" hidden>
+    <span class="eq"><i></i><i></i><i></i><i></i></span>
+  </button>
+  <div class="toast" id="toast" role="status"></div>
+  <audio id="bgm" loop preload="auto"></audio>
+
+  <script src="js/content.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
