@@ -124,7 +124,6 @@
                 <p class="back-label">Dress Code</p>
                 <p class="back-text">${esc(e.dressCode || "To be announced")}</p>
                 ${e.palette?.length ? `<div class="swatches">${e.palette.map((c) => `<span style="background:${esc(c)}"></span>`).join("")}</div>` : ""}
-                <button class="cal-btn" type="button" data-cal="${idx}">Add to Calendar</button>
               </div>
             </div>
           </div>`;
@@ -137,36 +136,11 @@
     card.setAttribute("aria-pressed", card.classList.contains("flipped"));
   };
   $$(".card").forEach((card) => {
-    card.addEventListener("click", (ev) => {
-      if (ev.target.closest(".cal-btn")) return;
-      flip(card);
-    });
+    card.addEventListener("click", () => flip(card));
     card.addEventListener("keydown", (ev) => {
       if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); flip(card); }
     });
   });
-  $$(".cal-btn").forEach((btn) =>
-    btn.addEventListener("click", (ev) => { ev.stopPropagation(); downloadICS(events[+btn.dataset.cal]); }));
-
-  function downloadICS(e) {
-    const stamp = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-    const text = (s) => String(s).replace(/[,;\\]/g, (m) => "\\" + m).replace(/\n/g, "\\n");
-    const ics = [
-      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Aarva//Wedding Invite//EN", "BEGIN:VEVENT",
-      `UID:${stamp(e.s)}-${e.name.replace(/\W/g, "")}@aarva`,
-      `DTSTAMP:${stamp(new Date())}`, `DTSTART:${stamp(e.s)}`, `DTEND:${stamp(e.e)}`,
-      `SUMMARY:${text(`${e.name} · ${names}`)}`,
-      `LOCATION:${text(`${W.venue.name}, ${W.venue.address}`)}`,
-      `DESCRIPTION:${text(`Theme: ${e.theme || "TBA"}\nDress code: ${e.dressCode || "TBA"}\nDirections: ${W.venue.mapsLink}`)}`,
-      "END:VEVENT", "END:VCALENDAR",
-    ].join("\r\n");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
-    a.download = `${e.name.replace(/\W+/g, "-")}.ics`;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  }
 
   /* ───────── Countdown ───────── */
   const target = new Date(W.countdownTo);

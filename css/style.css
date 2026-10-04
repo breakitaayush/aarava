@@ -753,7 +753,8 @@ button { font: inherit; }
     var(--sand);
   color: var(--ink);
   border: 2px solid var(--gold);
-  padding-top: 52px;
+  justify-content: center;
+  padding: 44px 22px 30px;
 }
 .ev-icon {
   width: 64px;
@@ -873,22 +874,6 @@ button { font: inherit; }
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px var(--gold), 0 2px 5px rgba(0,0,0,.2);
 }
-.cal-btn {
-  margin-top: auto;
-  padding: 8px 16px;
-  border: 1px solid var(--maroon);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--maroon);
-  font-family: var(--display);
-  font-size: .68rem;
-  font-weight: 600;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background .3s, color .3s;
-}
-.cal-btn:hover { background: var(--maroon); color: var(--gold-pale); }
 
 /* ─────────────── Love story timeline ─────────────── */
 .timeline {
