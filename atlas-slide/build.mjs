@@ -736,6 +736,113 @@ function canyonRoom(W, H, withTitle) {
 </svg>`;
 }
 
+// ---- Prism meeting room: sunlight through a glass prism, spreading a spectrum across the room ----
+function prismRoom(W, H, withTitle) {
+  const K = 4.2;
+  const pt = (p) => p.map((v) => v.toFixed(1)).join(',');
+  const tl = [HB.l, HB.t], tr = [HB.r, HB.t], bl = [HB.l, HB.b], br = [HB.r, HB.b];
+  let room = '';
+  room += `<path d="${P([tl, tr, hat(...tr, K), hat(...tl, K)])}" fill="#f2efe8"/>`;
+  room += `<path d="${P([tl, bl, hat(...bl, K), hat(...tl, K)])}" fill="#dfe0dc"/>`;
+  room += `<path d="${P([tr, br, hat(...br, K), hat(...tr, K)])}" fill="#d8dad6"/>`;
+  room += `<path d="${P([bl, br, hat(...br, K), hat(...bl, K)])}" fill="#d9c29c"/>`;
+  for (let x = HB.l; x <= HB.r; x += 36) room += `<path d="M${x},${HB.b} L${pt(hat(x, HB.b, K))}" stroke="#b39a73" stroke-width="0.6" opacity="0.7"/>`;
+  room += `<rect x="${HB.l}" y="${HB.t}" width="${HB.r - HB.l}" height="${HB.b - HB.t}" fill="#eceae4" stroke="${INK}" stroke-width="1.4"/>`;
+  for (const [a, b] of [[tl, hat(...tl, K)], [tr, hat(...tr, K)], [bl, hat(...bl, K)], [br, hat(...br, K)]])
+    room += `<path d="M${pt(a)} L${pt(b)}" stroke="${INK}" stroke-width="1.4"/>`;
+  room += `<line x1="${HB.l}" y1="${HB.b - 14}" x2="${HB.r}" y2="${HB.b - 14}" stroke="${INK}" stroke-width="0.7"/>`;
+  // ceiling: a row of triangular skylight coffers, the prism shape repeated
+  for (const k of [1.5, 2.2, 3.1]) {
+    const a = hat(840, HB.t, k), b = hat(1080, HB.t, k), c = hat(960, HB.t, k + 0.35);
+    room += `<path d="M${pt(a)} L${pt(b)} L${pt(c)} Z" fill="#dbe8f0" stroke="${INK}" stroke-width="0.9"/>`;
+  }
+  // tall window on the back wall, left of centre, with evening sun
+  const wx = 600, ww = 220, wt = HB.t + 50, wb = HB.b - 40;
+  room += `<rect x="${wx}" y="${wt}" width="${ww}" height="${wb - wt}" fill="url(#pSky)" stroke="${INK}" stroke-width="1.6"/>`;
+  room += `<circle cx="${wx + ww * 0.3}" cy="${wt + 90}" r="26" fill="#fff8e6" opacity="0.9"/>`;
+  room += `<line x1="${wx + ww / 2}" y1="${wt}" x2="${wx + ww / 2}" y2="${wb}" stroke="${INK}" stroke-width="1"/>`;
+  for (let y = wt + (wb - wt) / 4; y < wb; y += (wb - wt) / 4) room += `<line x1="${wx}" y1="${y}" x2="${wx + ww}" y2="${y}" stroke="${INK}" stroke-width="0.7"/>`;
+  room += `<rect x="${wx - 10}" y="${wb}" width="${ww + 20}" height="8" fill="#f4f1ea" stroke="${INK}" stroke-width="0.8"/>`;
+  // a framed landscape on the right of the back wall: hills after rain, a faint rainbow
+  room += `<rect x="1100" y="${HB.t + 110}" width="200" height="160" fill="#3a3129" stroke="${INK}" stroke-width="1"/><rect x="1108" y="${HB.t + 118}" width="184" height="144" fill="#f6f1e6"/>
+    <rect x="1120" y="${HB.t + 130}" width="160" height="120" fill="url(#pSky2)"/>
+    ${['#e0473b', '#efc64a', '#5fb35f', '#3fa2d4', '#8a58b3'].map((c, i) => `<path d="M${1140 + i * 3},${HB.t + 230} A${62 - i * 3},${62 - i * 3} 0 0 1 ${1264 - i * 3},${HB.t + 230}" stroke="${c}" stroke-width="2.6" fill="none" opacity="0.45"/>`).join('')}
+    <path d="M1120,${HB.t + 222} Q1160,${HB.t + 196} 1200,${HB.t + 216} T1280,${HB.t + 206} L1280,${HB.t + 250} L1120,${HB.t + 250} Z" fill="#7f9b72"/>
+    <path d="M1120,${HB.t + 236} Q1180,${HB.t + 220} 1280,${HB.t + 232} L1280,${HB.t + 250} L1120,${HB.t + 250} Z" fill="#5f7d57"/>`;
+
+  // table: soft rounded rectangle in pale ash
+  const T = { x: 960, y: 700, rx: 330, ry: 84 };
+  const rug = `<ellipse cx="960" cy="905" rx="600" ry="150" fill="#b9c3c6" stroke="#8b979b" stroke-width="1"/>
+    <ellipse cx="960" cy="905" rx="560" ry="132" fill="none" stroke="#e8ecec" stroke-width="1" stroke-dasharray="3 5"/>`;
+  const seats = [];
+  for (let i = 0; i < 10; i++) {
+    const a = rad(i * 36 + 18), sn = Math.sin(a);
+    seats.push({ x: T.x + Math.cos(a) * (T.rx + 40), y: sn > 0.35 ? T.y + sn * (T.ry + 40) : T.y + sn * T.ry * 0.9 + 28, s: 1 + sn * 0.3, front: sn > 0.35, sn });
+  }
+  const backChairs = seats.filter((c) => !c.front).sort((a, b) => a.sn - b.sn).map((c) => chair(c.x, c.y, c.s, false)).join('');
+  const frontChairs = seats.filter((c) => c.front).sort((a, b) => a.sn - b.sn).map((c) => chair(c.x, c.y + 40, c.s, true)).join('');
+  const table = `
+    <path d="M${T.x - 40},${T.y + 20} L${T.x - 28},${T.y + 196} L${T.x + 28},${T.y + 196} L${T.x + 40},${T.y + 20} Z" fill="#8e8a84" stroke="${INK}" stroke-width="1"/>
+    <ellipse cx="${T.x}" cy="${T.y + 198}" rx="120" ry="24" fill="#7b7771" stroke="${INK}" stroke-width="1"/>
+    <path d="M${T.x - T.rx},${T.y} L${T.x - T.rx},${T.y + 16} A${T.rx},${T.ry} 0 0 0 ${T.x + T.rx},${T.y + 16} L${T.x + T.rx},${T.y} Z" fill="#c7b08c" stroke="${INK}" stroke-width="1.2"/>
+    <ellipse cx="${T.x}" cy="${T.y}" rx="${T.rx}" ry="${T.ry}" fill="url(#pAsh)" stroke="${INK}" stroke-width="1.4"/>`;
+
+  // light: a white beam from the window to the prism, then a spectrum fanning out toward us
+  const prismC = [960, T.y - 26];
+  const beam = `<path d="M${wx + 40},${wt + 120} L${wx + ww - 20},${wt + 150} L${prismC[0] - 6},${prismC[1] + 6} L${prismC[0] - 22},${prismC[1] - 4} Z" fill="#fffbea" opacity="0.55"/>`;
+  const spec = ['#e0473b', '#ef8a2f', '#efc64a', '#5fb35f', '#3fa2d4', '#4b62c0', '#8a58b3'];
+  let fan = '';
+  spec.forEach((c, i) => {
+    const t0 = i / spec.length, t1 = (i + 1) / spec.length;
+    const ex = (t) => 1130 + t * 300, ey = (t) => 905 + t * 40;
+    fan += `<path d="M${prismC[0] + 18},${prismC[1] + 4} L${ex(t0).toFixed(1)},${ey(t0).toFixed(1)} L${ex(t1).toFixed(1)},${ey(t1).toFixed(1)} Z" fill="${c}" opacity="0.26" filter="url(#pSoft)"/>`;
+  });
+  // small rainbow caustics thrown onto the right wall
+  let caustics = '';
+  [[1.6, HB.t + 230]].forEach(([k, y]) => {
+    spec.forEach((c, i) => {
+      const a = hat(HB.r, y + i * 5, k), b = hat(HB.r, y + i * 5 - 12, k + 0.22);
+      caustics += `<path d="M${pt(a)} L${pt(b)}" stroke="${c}" stroke-width="${(3.4 * k).toFixed(1)}" opacity="0.3" stroke-linecap="round" filter="url(#pSoft)"/>`;
+    });
+  });
+  const px = prismC[0], py = prismC[1];
+  const prismGlass = `<g filter="url(#ink)">
+    <ellipse cx="${px}" cy="${py + 30}" rx="46" ry="9" fill="#000" opacity="0.12"/>
+    <path d="M${px - 36},${py + 26} L${px + 6},${py - 40} L${px + 6},${py + 32} Z" fill="#cfe6ef" fill-opacity="0.75" stroke="${INK}" stroke-width="1.2"/>
+    <path d="M${px + 6},${py - 40} L${px + 40},${py + 22} L${px + 6},${py + 32} Z" fill="#a9d1e2" fill-opacity="0.7" stroke="${INK}" stroke-width="1.2"/>
+    <path d="M${px - 28},${py + 18} L${px + 2},${py - 30}" stroke="#ffffff" stroke-width="2.5" opacity="0.9"/>
+    <path d="M${px + 12},${py - 22} L${px + 30},${py + 12}" stroke="#ffffff" stroke-width="1.5" opacity="0.8"/>
+  </g>`;
+
+  const vbx = (1920 - W) / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbx} 0 ${W} ${H}" width="${W}" height="${H}">
+  ${defs.replace('</defs>', `
+    <linearGradient id="pSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb6d6"/><stop offset="0.6" stop-color="#e5ddcf"/><stop offset="1" stop-color="#f3cf9e"/></linearGradient>
+    <linearGradient id="pSky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9db7c9"/><stop offset="1" stop-color="#eef0e8"/></linearGradient>
+    <filter id="pSoft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>
+    <radialGradient id="pAsh" cx="45%" cy="40%" r="70%"><stop offset="0" stop-color="#efe1c6"/><stop offset="1" stop-color="#d6bf98"/></radialGradient>
+  </defs>`)}
+  <rect x="-200" width="2400" height="1200" fill="#efe6d1"/>
+  <g filter="url(#ink)">${room}${rug}</g>
+  ${caustics}
+  ${backChairs}
+  <g filter="url(#ink)">${table}</g>
+  ${beam}
+  ${fan}
+  ${prismGlass}
+  ${frontChairs}
+  <rect x="-200" width="2400" height="1200" filter="url(#blotch)" opacity="0.5"/>
+  <rect x="-200" width="2400" height="1200" filter="url(#grain)"/>
+  ${withTitle ? `
+  <rect x="${960 - 260}" y="${H - 150}" width="520" height="118" fill="#f7ebcf" stroke="${INK}" stroke-width="1"/>
+  <rect x="${960 - 252}" y="${H - 142}" width="504" height="102" fill="none" stroke="${INK}" stroke-width="0.5"/>
+  <text x="960" y="${H - 86}" text-anchor="middle" font-family="Cinzel" font-size="50" letter-spacing="18" fill="${INK}">PRISM</text>
+  <text x="960" y="${H - 54}" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="24" fill="${INK}">the meeting room &#183; one light, many colours</text>` : ''}
+  <rect x="${vbx + 28}" y="28" width="${W - 56}" height="${H - 56}" fill="none" stroke="${INK}" stroke-width="1.3" opacity="0.8"/>
+  <rect x="${vbx + 38}" y="38" width="${W - 76}" height="${H - 76}" fill="none" stroke="${INK}" stroke-width="0.5" opacity="0.6"/>
+</svg>`;
+}
+
 const page = (svg, w, h) =>
   `<!doctype html><html><head><meta charset="utf-8"><style>${fontFaces}html,body{margin:0;background:#e9ddc2}.ns *{vector-effect:non-scaling-stroke}svg{display:block}</style></head><body>${svg}</body></html>`;
 
@@ -765,6 +872,12 @@ jobs.push(
   ['canyon-meeting-wide.png', canyonRoom(1920, 1080, true), 1920, 1080],
   ['canyon-meeting-wide-plain.png', canyonRoom(1920, 1080, false), 1920, 1080],
   ['canyon-meeting-square.png', canyonRoom(1080, 1080, true), 1080, 1080],
+);
+seed = 45;
+jobs.push(
+  ['prism-meeting-wide.png', prismRoom(1920, 1080, true), 1920, 1080],
+  ['prism-meeting-wide-plain.png', prismRoom(1920, 1080, false), 1920, 1080],
+  ['prism-meeting-square.png', prismRoom(1080, 1080, true), 1080, 1080],
 );
 const only = process.argv[2];
 if (only) jobs.splice(0, jobs.length, ...jobs.filter((x) => x[0].startsWith(only)));
