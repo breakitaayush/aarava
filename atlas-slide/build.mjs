@@ -219,13 +219,184 @@ function wide() {
 </svg>`;
 }
 
+// ---- the ballroom: one-point perspective, globe as chandelier, compass rose in the floor ----
+const V = { x: 960, y: 560 };            // vanishing point
+const BW = { l: 600, r: 1320, t: 300, b: 700 }; // back wall
+const at = (px, py, k) => [V.x + (px - V.x) * k, V.y + (py - V.y) * k];
+const L = (a, b, w = 1, extra = '') =>
+  `<path d="M${(a[0] + j(0.8)).toFixed(1)},${(a[1] + j(0.8)).toFixed(1)} L${(b[0] + j(0.8)).toFixed(1)},${(b[1] + j(0.8)).toFixed(1)}" stroke="${INK}" stroke-width="${w}" fill="none" ${extra}/>`;
+const quad = (pts, fill, extra = '') =>
+  `<path d="M${pts.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' L')} Z" fill="${fill}" ${extra}/>`;
+
+function archWindow(x, w, top, bottom) {
+  const r = w / 2, cx = x + r, spring = top + r;
+  let s = `<path d="M${x},${bottom} L${x},${spring} A${r},${r} 0 0 1 ${x + w},${spring} L${x + w},${bottom} Z" fill="#f4ecd9" stroke="${INK}" stroke-width="1.4"/>`;
+  s += `<path d="M${x - 9},${bottom + 6} L${x - 9},${spring} A${r + 9},${r + 9} 0 0 1 ${x + w + 9},${spring} L${x + w + 9},${bottom + 6}" fill="none" stroke="${INK}" stroke-width="0.7"/>`;
+  // mullions and panes
+  s += L([cx, top], [cx, bottom], 0.8);
+  for (let y = spring; y < bottom; y += (bottom - spring) / 6) s += L([x, y], [x + w, y], 0.6);
+  s += `<path d="M${x + w * 0.15},${spring} A${r * 0.7},${r * 0.7} 0 0 1 ${x + w * 0.85},${spring}" fill="none" stroke="${INK}" stroke-width="0.6"/>`;
+  // a little evening sky hatching in the glass
+  for (let y = spring + 8; y < bottom - 4; y += 7) s += L([x + 4, y], [x + w * 0.4, y - w * 0.4], 0.35, 'opacity="0.5"');
+  return s;
+}
+
+function floor() {
+  let s = '';
+  const fl = [BW.l, BW.b], fr = [BW.r, BW.b];
+  s += quad([fl, fr, at(...fr, 4.2), at(...fl, 4.2)], '#e6d6b4');
+  // boards running toward the vanishing point
+  for (let x = BW.l; x <= BW.r; x += 40) s += L([x, BW.b], at(x, BW.b, 4.2), 0.45, 'opacity="0.7"');
+  // cross joints, spaced the way a real floor recedes
+  for (let i = 1; i < 12; i++) {
+    const k = 1 + 0.32 * i * (1 + i * 0.06);
+    const a = at(BW.l, BW.b, k), b = at(BW.r, BW.b, k);
+    s += L(a, b, 0.4, 'opacity="0.55"');
+  }
+  return s;
+}
+
+function walls() {
+  let s = '';
+  const tl = [BW.l, BW.t], tr = [BW.r, BW.t], bl = [BW.l, BW.b], br = [BW.r, BW.b];
+  const K = 4.2;
+  // side walls + ceiling fills
+  s += quad([tl, bl, at(...bl, K), at(...tl, K)], '#e8dcc0');
+  s += quad([tr, br, at(...br, K), at(...tr, K)], '#e8dcc0');
+  s += quad([tl, tr, at(...tr, K), at(...tl, K)], '#ece2c9');
+  // side-wall columns with mirrored arches between them
+  const ks = [1.25, 1.6, 2.1, 2.9, 4.0];
+  for (const side of [BW.l, BW.r]) {
+    for (let i = 0; i < ks.length; i++) {
+      const k = ks[i], w = 22 * k * (side === BW.l ? 1 : -1);
+      const top = at(side, BW.t + 38, k), bot = at(side, BW.b, k);
+      const top2 = at(side + w / k, BW.t + 38, k), bot2 = at(side + w / k, BW.b, k);
+      s += quad([top, top2, bot2, bot], '#efe5cf', `stroke="${INK}" stroke-width="1"`);
+      s += L(at(side, BW.b - 30, k), at(side + w / k, BW.b - 30, k), 0.7);
+      s += L(at(side, BW.t + 60, k), at(side + w / k, BW.t + 60, k), 0.7);
+      if (i < ks.length - 1) {
+        // tall panel between this column and the next
+        const k2 = ks[i + 1];
+        const pad = 0.12;
+        const ka = k + pad, kb = k2 - pad * 1.6;
+        const p = [at(side, BW.t + 80, ka), at(side, BW.t + 80, kb), at(side, BW.b - 50, kb), at(side, BW.b - 50, ka)];
+        s += quad(p, '#f2e9d5', `stroke="${INK}" stroke-width="0.7"`);
+        const c1 = at(side, BW.t + 140, ka), c2 = at(side, BW.t + 140, kb);
+        s += L(c1, c2, 0.5, 'opacity="0.7"');
+      }
+    }
+  }
+  // cornice running round the room
+  for (const off of [0, 14, 24]) {
+    const y = BW.t + off;
+    s += L(at(BW.l, y, 1), at(BW.l, y, K), off ? 0.6 : 1.2);
+    s += L(at(BW.r, y, 1), at(BW.r, y, K), off ? 0.6 : 1.2);
+    s += L([BW.l, y], [BW.r, y], off ? 0.6 : 1.2);
+  }
+  // ceiling coffers
+  for (let x = BW.l; x <= BW.r; x += 120) s += L([x, BW.t], at(x, BW.t, K), 0.5, 'opacity="0.6"');
+  for (const k of [1.4, 2.0, 2.9]) s += L(at(BW.l, BW.t, k), at(BW.r, BW.t, k), 0.5, 'opacity="0.6"');
+  // room edges
+  s += L(tl, at(...tl, K), 1.4) + L(tr, at(...tr, K), 1.4) + L(bl, at(...bl, K), 1.4) + L(br, at(...br, K), 1.4);
+  s += `<rect x="${BW.l}" y="${BW.t}" width="${BW.r - BW.l}" height="${BW.b - BW.t}" fill="#efe6d1" stroke="${INK}" stroke-width="1.4"/>`;
+  // back wall: three tall arched windows with pilasters
+  const ww = 130, gap = (BW.r - BW.l - ww * 3) / 4;
+  for (let i = 0; i < 3; i++) s += archWindow(BW.l + gap + i * (ww + gap), ww, BW.t + 70, BW.b - 30);
+  for (let i = 0; i <= 3; i++) {
+    const x = BW.l + gap / 2 + i * (ww + gap) - 9;
+    if (i === 0 || i === 3) continue;
+    s += `<rect x="${x}" y="${BW.t + 30}" width="18" height="${BW.b - BW.t - 30}" fill="none" stroke="${INK}" stroke-width="0.7"/>`;
+  }
+  s += L([BW.l, BW.b - 22], [BW.r, BW.b - 22], 0.7);
+  return s;
+}
+
+function roseOnFloor(cx, cy, s) {
+  // drawn flat, then laid down onto the floor
+  const pts = (r1, r2, n, rot) => {
+    const p = [];
+    for (let i = 0; i < n * 2; i++) {
+      const r = i % 2 ? r2 : r1, a = rot + (Math.PI / n) * i - Math.PI / 2;
+      p.push(`${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`);
+    }
+    return p.join(' ');
+  };
+  let ticks = '';
+  for (let a = 0; a < 360; a += 5) {
+    const t = rad(a), l = a % 45 === 0 ? 22 : 10;
+    ticks += `M${(Math.cos(t) * s * 1.02).toFixed(1)},${(Math.sin(t) * s * 1.02).toFixed(1)} L${(Math.cos(t) * (s * 1.02 + l)).toFixed(1)},${(Math.sin(t) * (s * 1.02 + l)).toFixed(1)} `;
+  }
+  return `<g transform="translate(${cx} ${cy}) scale(1 0.26)" class="ns">
+    <circle r="${s * 1.18}" fill="#ecdfc2" stroke="${INK}" stroke-width="1.2"/>
+    <circle r="${s * 1.02}" fill="none" stroke="${INK}" stroke-width="0.8"/>
+    <path d="${ticks}" stroke="${INK}" stroke-width="0.8" fill="none"/>
+    <polygon points="${pts(s * 0.62, s * 0.12, 8, Math.PI / 8)}" fill="none" stroke="${INK}" stroke-width="0.8"/>
+    <polygon points="${pts(s * 0.95, s * 0.16, 4, Math.PI / 4)}" fill="#e3d2ad" stroke="${INK}" stroke-width="0.9"/>
+    <polygon points="${pts(s * 0.98, s * 0.18, 4, 0)}" fill="#f3ead6" stroke="${INK}" stroke-width="1.1"/>
+    <path d="M0,${-s * 0.98} L${s * 0.09},${-s * 0.2} L0,${-s * 0.12} Z" fill="${RUST}" stroke="${INK}" stroke-width="0.6"/>
+    <circle r="${s * 0.05}" fill="${RUST}"/><circle r="${s * 0.1}" fill="none" stroke="${RUST}" stroke-width="1"/>
+  </g>`;
+}
+
+// guests' paths: dotted footsteps from the doors and the front, all ending at the rose
+function paths(cx, cy) {
+  const starts = [[150, 1080], [1770, 1080], [320, 822], [1600, 822], [960, 1100]];
+  return starts.map(([x, y], i) => {
+    const mx = (x + cx) / 2 + (i % 2 ? -1 : 1) * 120, my = (y + cy) / 2 + 40;
+    return `<path d="M${x},${y} Q${mx},${my} ${cx},${cy}" stroke="${RUST}" stroke-width="2" fill="none" stroke-dasharray="2 9" stroke-linecap="round" opacity="0.9"/>`;
+  }).join('');
+}
+
+function chandelier(cx, cy, scale) {
+  const r = (R + 62) * scale;
+  let drops = '';
+  for (let i = 1; i < 9; i++) {
+    const a = rad(i * 20);
+    const x = cx + Math.cos(a) * (R + 40) * scale, y = cy + Math.sin(a) * (R + 40) * scale * 0.32 + 4;
+    drops += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y + 14).toFixed(1)}" stroke="${INK}" stroke-width="0.6"/>
+      <path d="M${x.toFixed(1)},${(y + 14).toFixed(1)} q-3.5,6 0,10 q3.5,-4 0,-10 Z" fill="#f6efdd" stroke="${INK}" stroke-width="0.6"/>`;
+  }
+  return `
+    <circle cx="${cx}" cy="${cy}" r="${r * 2.1}" fill="url(#glow)"/>
+    <g filter="url(#ink)">
+      <path d="M${cx},0 L${cx},${cy - r}" stroke="${INK}" stroke-width="1.6" stroke-dasharray="6 3"/>
+      <path d="M${cx - 30},${cy - r - 4} Q${cx},${cy - r - 40} ${cx + 30},${cy - r - 4}" stroke="${INK}" stroke-width="1" fill="none"/>
+      <g transform="translate(${cx} ${cy}) scale(${scale}) rotate(-8)" class="ns">${globe()}</g>
+      <path d="M${cx - (R + 40) * scale},${cy} A${(R + 40) * scale},${(R + 40) * scale * 0.32} 0 0 0 ${cx + (R + 40) * scale},${cy}" fill="none" stroke="${INK}" stroke-width="1.3"/>
+      ${drops}
+    </g>`;
+}
+
+function ballroom(W, H, withTitle) {
+  const roseC = [960, 880];
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${W === 1920 ? '0 0 1920 1080' : `${(1920 - W) / 2} 0 ${W} ${H}`}" width="${W}" height="${H}">
+  ${defs.replace('</defs>', `<radialGradient id="glow"><stop offset="0" stop-color="#fff6dc" stop-opacity="0.9"/><stop offset="1" stop-color="#fff6dc" stop-opacity="0"/></radialGradient></defs>`)}
+  <rect x="-200" width="2400" height="1200" fill="url(#paper)"/>
+  <g filter="url(#ink)">${walls()}${floor()}</g>
+  <g filter="url(#ink)">${roseOnFloor(roseC[0], roseC[1], 300)}${paths(roseC[0], roseC[1])}</g>
+  ${chandelier(960, 330, 0.5)}
+  <rect x="-200" width="2400" height="1200" filter="url(#blotch)"/>
+  <rect x="-200" width="2400" height="1200" filter="url(#grain)"/>
+  ${withTitle ? `
+  <rect x="${960 - 260}" y="${H - 150}" width="520" height="118" fill="#efe6d1" stroke="${INK}" stroke-width="1"/>
+  <rect x="${960 - 252}" y="${H - 142}" width="504" height="102" fill="none" stroke="${INK}" stroke-width="0.5"/>
+  <text x="960" y="${H - 86}" text-anchor="middle" font-family="Cinzel" font-size="50" letter-spacing="18" fill="${INK}">ATLAS</text>
+  <text x="960" y="${H - 54}" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="24" fill="${INK}">the ballroom &#183; where every road meets</text>` : ''}
+  <rect x="${(1920 - W) / 2 + 28}" y="28" width="${W - 56}" height="${H - 56}" fill="none" stroke="${INK}" stroke-width="1.3" opacity="0.8"/>
+  <rect x="${(1920 - W) / 2 + 38}" y="38" width="${W - 76}" height="${H - 76}" fill="none" stroke="${INK}" stroke-width="0.5" opacity="0.6"/>
+</svg>`;
+}
+
 const page = (svg, w, h) =>
-  `<!doctype html><html><head><meta charset="utf-8"><style>${fontFaces}html,body{margin:0;background:#e9ddc2}svg{display:block}</style></head><body>${svg}</body></html>`;
+  `<!doctype html><html><head><meta charset="utf-8"><style>${fontFaces}html,body{margin:0;background:#e9ddc2}.ns *{vector-effect:non-scaling-stroke}svg{display:block}</style></head><body>${svg}</body></html>`;
 
 const jobs = [
   ['atlas-square.png', square(true), 1000, 1000],
   ['atlas-square-plain.png', square(false), 1000, 1000],
   ['atlas-wide-background.png', wide(), 1920, 1080],
+  ['atlas-ballroom-wide.png', ballroom(1920, 1080, true), 1920, 1080],
+  ['atlas-ballroom-wide-plain.png', ballroom(1920, 1080, false), 1920, 1080],
+  ['atlas-ballroom-square.png', ballroom(1080, 1080, true), 1080, 1080],
 ];
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
