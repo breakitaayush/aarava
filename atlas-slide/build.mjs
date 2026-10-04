@@ -843,6 +843,109 @@ function prismRoom(W, H, withTitle) {
 </svg>`;
 }
 
+// ---- Aura meeting room: a wall of dawn sky, its glow filling the room ----
+function auraRoom(W, H, withTitle) {
+  const K = 4.2;
+  const pt = (p) => p.map((v) => v.toFixed(1)).join(',');
+  const tl = [HB.l, HB.t], tr = [HB.r, HB.t], bl = [HB.l, HB.b], br = [HB.r, HB.b];
+  let room = '';
+  room += `<path d="${P([tl, tr, hat(...tr, K), hat(...tl, K)])}" fill="#efe8e6"/>`;
+  room += `<path d="${P([tl, bl, hat(...bl, K), hat(...tl, K)])}" fill="#e2d8d8"/>`;
+  room += `<path d="${P([tr, br, hat(...br, K), hat(...tr, K)])}" fill="#dbd0d1"/>`;
+  room += `<path d="${P([bl, br, hat(...br, K), hat(...bl, K)])}" fill="#d8c4a8"/>`;
+  for (let x = HB.l; x <= HB.r; x += 36) room += `<path d="M${x},${HB.b} L${pt(hat(x, HB.b, K))}" stroke="#b49c7d" stroke-width="0.6" opacity="0.6"/>`;
+  room += `<rect x="${HB.l}" y="${HB.t}" width="${HB.r - HB.l}" height="${HB.b - HB.t}" fill="#e9e1df" stroke="${INK}" stroke-width="1.4"/>`;
+  for (const [a, b] of [[tl, hat(...tl, K)], [tr, hat(...tr, K)], [bl, hat(...bl, K)], [br, hat(...br, K)]])
+    room += `<path d="M${pt(a)} L${pt(b)}" stroke="${INK}" stroke-width="1.4"/>`;
+
+  // the dawn window: nearly the whole back wall
+  const x0 = HB.l + 36, x1 = HB.r - 36, y0 = HB.t + 34, y1 = HB.b - 26, ww = x1 - x0, wh = y1 - y0;
+  const hz = y0 + wh * 0.62;
+  let view = `<rect x="${x0}" y="${y0}" width="${ww}" height="${wh}" fill="url(#aSky)"/>`;
+  view += `<ellipse cx="${x0 + ww * 0.55}" cy="${hz}" rx="${ww * 0.45}" ry="${wh * 0.32}" fill="url(#aSun)"/>`;
+  view += `<path d="M${x0},${hz - 30} Q${x0 + ww * 0.15},${hz - 62} ${x0 + ww * 0.3},${hz - 34} T${x0 + ww * 0.62},${hz - 26} Q${x0 + ww * 0.8},${hz - 58} ${x1},${hz - 22} L${x1},${hz} L${x0},${hz} Z" fill="#9c8aa6" opacity="0.85"/>`;
+  view += `<path d="M${x0},${hz - 10} Q${x0 + ww * 0.25},${hz - 30} ${x0 + ww * 0.45},${hz - 12} T${x1},${hz - 8} L${x1},${hz} L${x0},${hz} Z" fill="#7d6f8f"/>`;
+  view += `<rect x="${x0}" y="${hz}" width="${ww}" height="${y1 - hz}" fill="url(#aLake)"/>`;
+  for (let i = 0; i < 14; i++) {
+    const y = hz + 6 + i * ((y1 - hz - 8) / 14), w2 = 40 + rnd() * 90, cx = x0 + ww * (0.42 + rnd() * 0.26);
+    view += `<line x1="${(cx - w2 / 2).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(cx + w2 / 2).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#fff1dc" stroke-width="1.4" opacity="0.6"/>`;
+  }
+  room += `<svg x="${x0}" y="${y0}" width="${ww}" height="${wh}" viewBox="${x0} ${y0} ${ww} ${wh}" overflow="hidden">${view}</svg>`;
+  room += `<rect x="${x0}" y="${y0}" width="${ww}" height="${wh}" fill="none" stroke="${INK}" stroke-width="1.8"/>`;
+  for (let i = 1; i < 4; i++) room += `<line x1="${x0 + (ww * i) / 4}" y1="${y0}" x2="${x0 + (ww * i) / 4}" y2="${y1}" stroke="${INK}" stroke-width="1.1"/>`;
+  // sheer curtains gathered at both ends
+  for (const [cx, dir] of [[x0 + 4, 1], [x1 - 4, -1]]) {
+    room += `<path d="M${cx},${y0 - 6} L${cx + dir * 46},${y0 - 6} Q${cx + dir * 30},${(y0 + y1) / 2} ${cx + dir * 40},${y1 + 18} L${cx},${y1 + 18} Z" fill="#fbf6f0" opacity="0.85" stroke="#c9bdb8" stroke-width="0.8"/>`;
+    for (let f = 1; f < 4; f++) room += `<path d="M${cx + dir * f * 11},${y0 - 4} Q${cx + dir * f * 8},${(y0 + y1) / 2} ${cx + dir * f * 10},${y1 + 16}" stroke="#d9cec9" stroke-width="0.8" fill="none"/>`;
+  }
+  room += `<line x1="${x0 - 20}" y1="${y0 - 8}" x2="${x1 + 20}" y2="${y0 - 8}" stroke="${INK}" stroke-width="2"/>`;
+
+  // cove lighting tracing the ceiling edges
+  let cove = '';
+  for (const side of [HB.l, HB.r]) {
+    const a = hat(side, HB.t + 6, 1), b = hat(side, HB.t + 6, K);
+    cove += `<path d="M${pt(a)} L${pt(b)}" stroke="#ffd9b8" stroke-width="18" opacity="0.5" filter="url(#aBlur)"/>`;
+  }
+
+  // oval table + chairs
+  const T = { x: 960, y: 705, rx: 360, ry: 80 };
+  const rug = `<ellipse cx="960" cy="905" rx="620" ry="150" fill="#d9c9cf" stroke="#ad99a2" stroke-width="1"/>
+    <ellipse cx="960" cy="905" rx="580" ry="132" fill="none" stroke="#f1e7ea" stroke-width="1" stroke-dasharray="3 5"/>`;
+  const seats = [];
+  for (let i = 0; i < 10; i++) {
+    const a = rad(i * 36 + 18), sn = Math.sin(a);
+    seats.push({ x: T.x + Math.cos(a) * (T.rx + 40), y: sn > 0.35 ? T.y + sn * (T.ry + 40) : T.y + sn * T.ry * 0.9 + 28, s: 1 + sn * 0.3, front: sn > 0.35, sn });
+  }
+  const backChairs = seats.filter((c) => !c.front).sort((a, b) => a.sn - b.sn).map((c) => chair(c.x, c.y, c.s, false)).join('');
+  const frontChairs = seats.filter((c) => c.front).sort((a, b) => a.sn - b.sn).map((c) => chair(c.x, c.y + 40, c.s, true)).join('');
+  let items = '';
+  for (let i = 0; i < 10; i++) {
+    const a = rad(i * 36 + 18);
+    const px = T.x + Math.cos(a) * T.rx * 0.76, py = T.y + Math.sin(a) * T.ry * 0.74;
+    items += `<g transform="translate(${px.toFixed(1)} ${py.toFixed(1)}) scale(1 0.32) rotate(${(i * 36 + 108).toFixed(0)})"><rect x="-17" y="-24" width="34" height="46" fill="#fbf8f1" stroke="${INK}" stroke-width="1.6"/></g>`;
+  }
+  const table = `
+    <path d="M${T.x - 40},${T.y + 20} L${T.x - 28},${T.y + 196} L${T.x + 28},${T.y + 196} L${T.x + 40},${T.y + 20} Z" fill="#a9a19d" stroke="${INK}" stroke-width="1"/>
+    <ellipse cx="${T.x}" cy="${T.y + 198}" rx="130" ry="24" fill="#958d89" stroke="${INK}" stroke-width="1"/>
+    <path d="M${T.x - T.rx},${T.y} L${T.x - T.rx},${T.y + 16} A${T.rx},${T.ry} 0 0 0 ${T.x + T.rx},${T.y + 16} L${T.x + T.rx},${T.y} Z" fill="#cdbfb6" stroke="${INK}" stroke-width="1.2"/>
+    <ellipse cx="${T.x}" cy="${T.y}" rx="${T.rx}" ry="${T.ry}" fill="url(#aTop)" stroke="${INK}" stroke-width="1.4"/>
+    <ellipse cx="${T.x + 20}" cy="${T.y - 18}" rx="${T.rx * 0.5}" ry="${T.ry * 0.35}" fill="#ffd9b8" opacity="0.45" filter="url(#aBlur)"/>
+    ${items}
+    ${[[-14, -58, '#c9a3c6'], [-4, -70, '#e8b9a8'], [9, -62, '#b9a3d2'], [16, -50, '#e8c7b0'], [2, -54, '#d7a9b9']].map(([dx, h, c]) => `<path d="M${T.x},${T.y - 20} Q${T.x + dx * 0.5},${T.y + h * 0.6} ${T.x + dx},${T.y + h}" stroke="#6f8a62" stroke-width="1.3" fill="none"/><circle cx="${T.x + dx}" cy="${T.y + h}" r="5.5" fill="${c}" stroke="${INK}" stroke-width="0.6"/>`).join('')}
+    <path d="M${T.x - 9},${T.y + 2} Q${T.x - 15},${T.y - 12} ${T.x - 4},${T.y - 22} L${T.x - 4},${T.y - 28} L${T.x + 4},${T.y - 28} L${T.x + 4},${T.y - 22} Q${T.x + 15},${T.y - 12} ${T.x + 9},${T.y + 2} Z" fill="#dfe9ea" fill-opacity="0.85" stroke="${INK}" stroke-width="0.9"/>`;
+
+  // the aura: dawn glow spilling from the window into the room
+  const glow = `<ellipse cx="${x0 + ww * 0.55}" cy="${hz + 40}" rx="900" ry="420" fill="url(#aGlow)"/>`;
+
+  const vbx = (1920 - W) / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbx} 0 ${W} ${H}" width="${W}" height="${H}">
+  ${defs.replace('</defs>', `
+    <linearGradient id="aSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6e7bab"/><stop offset="0.3" stop-color="#a99bc4"/><stop offset="0.5" stop-color="#e5b6bd"/><stop offset="0.62" stop-color="#f8cfa6"/><stop offset="1" stop-color="#f8cfa6"/></linearGradient>
+    <linearGradient id="aLake" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7b9b4"/><stop offset="1" stop-color="#8e86ab"/></linearGradient>
+    <radialGradient id="aSun"><stop offset="0" stop-color="#fff3d8" stop-opacity="0.95"/><stop offset="0.4" stop-color="#ffd9b0" stop-opacity="0.5"/><stop offset="1" stop-color="#ffd9b0" stop-opacity="0"/></radialGradient>
+    <radialGradient id="aGlow"><stop offset="0" stop-color="#ffd8b4" stop-opacity="0.38"/><stop offset="0.6" stop-color="#f3c3c4" stop-opacity="0.12"/><stop offset="1" stop-color="#f3c3c4" stop-opacity="0"/></radialGradient>
+    <radialGradient id="aTop" cx="50%" cy="20%" r="80%"><stop offset="0" stop-color="#f3e6dc"/><stop offset="1" stop-color="#d9c7bb"/></radialGradient>
+    <filter id="aBlur" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>`)}
+  <rect x="-200" width="2400" height="1200" fill="#efe6d1"/>
+  <g filter="url(#ink)">${room}${rug}</g>
+  ${cove}
+  ${backChairs}
+  <g filter="url(#ink)">${table}</g>
+  ${frontChairs}
+  ${glow}
+  <rect x="-200" width="2400" height="1200" filter="url(#blotch)" opacity="0.45"/>
+  <rect x="-200" width="2400" height="1200" filter="url(#grain)"/>
+  ${withTitle ? `
+  <rect x="${960 - 260}" y="${H - 150}" width="520" height="118" fill="#f7ebcf" stroke="${INK}" stroke-width="1"/>
+  <rect x="${960 - 252}" y="${H - 142}" width="504" height="102" fill="none" stroke="${INK}" stroke-width="0.5"/>
+  <text x="960" y="${H - 86}" text-anchor="middle" font-family="Cinzel" font-size="50" letter-spacing="18" fill="${INK}">AURA</text>
+  <text x="960" y="${H - 54}" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="24" fill="${INK}">the meeting room &#183; the light before the day</text>` : ''}
+  <rect x="${vbx + 28}" y="28" width="${W - 56}" height="${H - 56}" fill="none" stroke="${INK}" stroke-width="1.3" opacity="0.8"/>
+  <rect x="${vbx + 38}" y="38" width="${W - 76}" height="${H - 76}" fill="none" stroke="${INK}" stroke-width="0.5" opacity="0.6"/>
+</svg>`;
+}
+
 const page = (svg, w, h) =>
   `<!doctype html><html><head><meta charset="utf-8"><style>${fontFaces}html,body{margin:0;background:#e9ddc2}.ns *{vector-effect:non-scaling-stroke}svg{display:block}</style></head><body>${svg}</body></html>`;
 
@@ -878,6 +981,12 @@ jobs.push(
   ['prism-meeting-wide.png', prismRoom(1920, 1080, true), 1920, 1080],
   ['prism-meeting-wide-plain.png', prismRoom(1920, 1080, false), 1920, 1080],
   ['prism-meeting-square.png', prismRoom(1080, 1080, true), 1080, 1080],
+);
+seed = 57;
+jobs.push(
+  ['aura-meeting-wide.png', auraRoom(1920, 1080, true), 1920, 1080],
+  ['aura-meeting-wide-plain.png', auraRoom(1920, 1080, false), 1920, 1080],
+  ['aura-meeting-square.png', auraRoom(1080, 1080, true), 1080, 1080],
 );
 const only = process.argv[2];
 if (only) jobs.splice(0, jobs.length, ...jobs.filter((x) => x[0].startsWith(only)));
