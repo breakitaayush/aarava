@@ -1,0 +1,259 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@font-face{font-family:'Cinzel';src:url(cinzel-latin-63551c.woff2) format('woff2');}
+@font-face{font-family:'Cormorant';font-style:italic;src:url(cormorant-garamond-latin-9ca58f.woff2) format('woff2');}
+html,body{margin:0;background:#000;overflow:hidden}
+#wrap{position:relative;width:1920px;height:1080px}
+#out{position:absolute;inset:0}
+#plate{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);width:580px;padding:18px 0 16px;background:rgba(247,238,220,.94);border:1px solid #3b2f24;outline:1px solid rgba(59,47,36,.5);outline-offset:-7px;text-align:center;color:#3b2f24;display:none}
+#plate h1{margin:0;font:400 50px/1 Cinzel;letter-spacing:18px;padding-left:18px}
+#plate p{margin:8px 0 0;font:italic 24px/1 Cormorant}
+</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="wrap"><canvas id="out" width="1920" height="1080"></canvas><div id="plate"><h1>MIRAGE</h1><p>meeting rooms one + two &#183; two rooms, one horizon</p></div></div>
+<script type="module">
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const params = new URLSearchParams(location.search);
+const W = +(params.get('w') || 1920), H = +(params.get('h') || 1080);
+document.getElementById('wrap').style.width = W + 'px';
+document.getElementById('wrap').style.height = H + 'px';
+const out = document.getElementById('out'); out.width = W; out.height = H;
+if (params.get('title') === '1') document.getElementById('plate').style.display = 'block';
+
+let s = 23;
+const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+function canvasTex(w, h, draw, repeat = [1, 1]) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+function speckle(g, w, h, n, colors, size, alpha = 0.1) {
+  for (let i = 0; i < n; i++) {
+    g.fillStyle = colors[Math.floor(rnd() * colors.length)];
+    g.globalAlpha = alpha * (0.4 + rnd());
+    g.beginPath(); g.arc(rnd() * w, rnd() * h, size * (0.3 + rnd()), 0, 7); g.fill();
+  }
+  g.globalAlpha = 1;
+}
+
+// textures
+const stone = canvasTex(1024, 1024, (g, w, h) => {
+  g.fillStyle = '#c9b496'; g.fillRect(0, 0, w, h);
+  speckle(g, w, h, 12000, ['#b59c7c', '#dccab0', '#a88f70', '#e6d8c2'], 2.5, 0.12);
+  for (let i = 0; i < 18; i++) { // soft veins
+    g.strokeStyle = `rgba(140,115,85,${0.05 + rnd() * 0.06})`; g.lineWidth = 1 + rnd() * 2;
+    g.beginPath(); let x = rnd() * w, y = rnd() * h; g.moveTo(x, y);
+    for (let j = 0; j < 12; j++) { x += (rnd() - 0.3) * 80; y += (rnd() - 0.5) * 50; g.lineTo(x, y); }
+    g.stroke();
+  }
+  g.strokeStyle = 'rgba(90,70,50,0.22)'; g.lineWidth = 2;
+  for (let x = 0; x <= w; x += w / 2) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+  for (let y = 0; y <= h; y += h / 2) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+}, [6, 9]);
+const fabric = canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#d6c1a2'; g.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 2) { g.fillStyle = `rgba(110,85,60,${0.03 + rnd() * 0.04})`; g.fillRect(0, y, w, 1); }
+  for (let x = 0; x < w; x += 2) { g.fillStyle = `rgba(255,245,230,${0.02 + rnd() * 0.03})`; g.fillRect(x, 0, 1, h); }
+}, [4, 2]);
+const plaster = canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#ece4d8'; g.fillRect(0, 0, w, h);
+  speckle(g, w, h, 2500, ['#e0d6c8', '#f4eee4'], 5, 0.08);
+}, [4, 4]);
+// the screen: a desert horizon where the heat haze looks like water
+const screenTex = canvasTex(1600, 900, (g, w, h) => {
+  const sky = g.createLinearGradient(0, 0, 0, h * 0.6);
+  sky.addColorStop(0, '#7fa6c6'); sky.addColorStop(0.7, '#e6d8c4'); sky.addColorStop(1, '#f2d2a6');
+  g.fillStyle = sky; g.fillRect(0, 0, w, h);
+  const hz = h * 0.58;
+  g.filter = 'blur(2px)';
+  // distant dunes
+  g.fillStyle = '#d9a46e';
+  g.beginPath(); g.moveTo(0, hz);
+  for (let x = 0; x <= w; x += 20) g.lineTo(x, hz - 18 - 22 * Math.sin(x * 0.004 + 1) - 10 * Math.sin(x * 0.011));
+  g.lineTo(w, h); g.lineTo(0, h); g.fill();
+  // mirage: a pale shimmering band on the horizon, like water that isn't there
+  g.filter = 'blur(6px)';
+  g.fillStyle = 'rgba(190,214,228,0.85)'; g.fillRect(w * 0.12, hz - 6, w * 0.6, 22);
+  g.filter = 'blur(1.5px)';
+  for (let i = 0; i < 26; i++) {
+    g.fillStyle = `rgba(245,250,252,${0.25 + rnd() * 0.35})`;
+    g.fillRect(w * (0.14 + rnd() * 0.5), hz - 4 + rnd() * 18, 40 + rnd() * 160, 1.5);
+  }
+  // near dunes with light and shade
+  g.filter = 'none';
+  const d1 = g.createLinearGradient(0, hz, 0, h);
+  d1.addColorStop(0, '#d79a5e'); d1.addColorStop(1, '#b4743f');
+  g.fillStyle = d1;
+  g.beginPath(); g.moveTo(0, hz + 40);
+  for (let x = 0; x <= w; x += 10) g.lineTo(x, hz + 40 + 50 * Math.sin(x * 0.003 + 2) + 20 * Math.sin(x * 0.008));
+  g.lineTo(w, h); g.lineTo(0, h); g.fill();
+  g.fillStyle = 'rgba(120,70,35,0.35)';
+  g.beginPath(); g.moveTo(w * 0.35, h);
+  for (let x = w * 0.35; x <= w; x += 10) g.lineTo(x, hz + 70 + 50 * Math.sin(x * 0.003 + 2) + 20 * Math.sin(x * 0.008) + (x - w * 0.35) * 0.05);
+  g.lineTo(w, h); g.fill();
+});
+
+// renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.3;
+
+const RW = 13, RD = 19, RH = 4.2;
+const camera = new THREE.PerspectiveCamera(W > H ? 55 : 68, W / H, 0.1, 100);
+camera.position.set(1.6, 1.65, RD - 0.8);
+camera.lookAt(-0.3, 1.45, 0);
+
+const std = (o) => new THREE.MeshStandardMaterial(o);
+function add(geo, mat, x, y, z, cast = true, recv = true) {
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+  m.castShadow = cast; m.receiveShadow = recv; scene.add(m); return m;
+}
+
+// polished floor: a mirror underneath a semi-transparent stone surface gives a soft, glossy reflection
+const mirror = new Reflector(new THREE.PlaneGeometry(RW, RD), { textureWidth: W / 2, textureHeight: H / 2, color: '#a09890' });
+mirror.rotation.x = -Math.PI / 2; mirror.position.set(0, -0.002, RD / 2); scene.add(mirror);
+const floor = add(new THREE.PlaneGeometry(RW, RD), std({ map: stone, roughness: 0.25, transparent: true, opacity: 0.74 }), 0, 0, RD / 2, false);
+floor.rotation.x = -Math.PI / 2;
+
+// ceiling with recessed downlights in a grid
+const ceil = add(new THREE.PlaneGeometry(RW, RD), std({ color: '#efe8de', roughness: 0.95 }), 0, RH, RD / 2, false);
+ceil.rotation.x = Math.PI / 2;
+const dl = new THREE.MeshBasicMaterial({ color: '#fff4dc' });
+for (const x of [-4.2, -1.4, 1.4, 4.2]) for (let z = 2; z < RD; z += 2.4) {
+  add(new THREE.CircleGeometry(0.09, 24), dl, x, RH - 0.003, z, false, false).rotation.x = Math.PI / 2;
+  add(new THREE.RingGeometry(0.09, 0.12, 24), std({ color: '#c9b79c', metalness: 0.8, roughness: 0.3 }), x, RH - 0.004, z, false, false).rotation.x = Math.PI / 2;
+}
+// partition track across the ceiling, halfway down: where the two rooms join
+add(new THREE.BoxGeometry(RW, 0.08, 0.22), std({ color: '#3d342c', roughness: 0.5, metalness: 0.4 }), 0, RH - 0.04, 9.0, false, false);
+
+// walls: plaster with fabric panels
+const back = add(new THREE.PlaneGeometry(RW, RH), std({ map: plaster, roughness: 0.9 }), 0, RH / 2, 0, false);
+for (const side of [-1, 1]) {
+  const wall = add(new THREE.PlaneGeometry(RD, RH), std({ map: plaster, roughness: 0.9 }), side * RW / 2, RH / 2, RD / 2, false);
+  wall.rotation.y = -side * Math.PI / 2;
+  for (let z = 1.2; z < RD - 0.6; z += 1.5) {
+    add(new THREE.BoxGeometry(0.05, RH - 1.0, 1.36), std({ map: fabric, roughness: 1 }), side * (RW / 2 - 0.03), RH / 2 + 0.1, z + 0.68);
+  }
+  // skirting
+  add(new THREE.BoxGeometry(0.03, 0.12, RD), std({ color: '#7a6450', roughness: 0.6 }), side * (RW / 2 - 0.015), 0.06, RD / 2, false);
+}
+// the folded partition: tall acoustic panels stacked against the left wall at the track line
+for (let i = 0; i < 7; i++) {
+  add(new THREE.BoxGeometry(0.11, RH - 0.12, 1.2), std({ map: fabric, color: i % 2 ? '#e8dccb' : '#f2e8d8', roughness: 1 }), -RW / 2 + 0.12 + i * 0.12, (RH - 0.12) / 2, 9.0);
+}
+
+// stage + screen
+const stageMat = std({ color: '#5a4030', roughness: 0.4 });
+add(new THREE.BoxGeometry(7.5, 0.4, 2.6), stageMat, 0, 0.2, 1.3);
+add(new THREE.BoxGeometry(7.6, 0.03, 2.7), std({ color: '#2b211a', roughness: 0.3 }), 0, 0.41, 1.32);
+const scrW = 7.0, scrH = scrW * 9 / 16;
+add(new THREE.BoxGeometry(scrW + 0.16, scrH + 0.16, 0.08), std({ color: '#1d1a17', roughness: 0.4 }), 0, 0.55 + 0.35 + scrH / 2, 0.06, false);
+add(new THREE.PlaneGeometry(scrW, scrH), new THREE.MeshBasicMaterial({ map: screenTex, color: '#ffffff', toneMapped: false }), 0, 0.55 + 0.35 + scrH / 2, 0.11, false, false);
+// lectern + low lounge chairs on stage
+add(new RoundedBoxGeometry(0.6, 1.1, 0.45, 3, 0.03), std({ color: '#3b2c22', roughness: 0.5 }), 2.6, 0.4 + 0.55, 1.6);
+const lounge = std({ color: '#d8c6aa', roughness: 0.8 });
+for (const x of [-2.3, -1.3]) {
+  add(new RoundedBoxGeometry(0.75, 0.42, 0.7, 4, 0.12), lounge, x, 0.4 + 0.21, 1.4);
+  add(new RoundedBoxGeometry(0.75, 0.5, 0.18, 4, 0.08), lounge, x, 0.4 + 0.55, 1.12);
+}
+// two plants framing the stage
+function plant(x, z) {
+  add(new THREE.CylinderGeometry(0.28, 0.22, 0.6, 32), std({ color: '#b9a48a', roughness: 0.7 }), x, 0.3, z);
+  const leaf = std({ color: '#4f6b45', roughness: 0.7 });
+  const leaf2 = std({ color: '#61804f', roughness: 0.7 });
+  for (let i = 0; i < 110; i++) {
+    const a = rnd() * Math.PI * 2, y = 0.8 + rnd() * 1.6, r = (0.12 + rnd() * 0.42) * (1 - (y - 0.8) / 2.2);
+    const m = add(new THREE.SphereGeometry(0.07 + rnd() * 0.05, 8, 6), rnd() > 0.5 ? leaf : leaf2, x + Math.cos(a) * r, y, z + Math.sin(a) * r);
+    m.scale.set(1, 0.35, 2.2); m.rotation.set(rnd(), a, rnd());
+  }
+  add(new THREE.CylinderGeometry(0.025, 0.03, 1.4), std({ color: '#5a4636' }), x, 1.0, z);
+}
+plant(-4.6, 1.0); plant(4.6, 1.0);
+
+// event seating: rows of upholstered chairs with a centre aisle (instanced)
+const seatGeo = new RoundedBoxGeometry(0.46, 0.08, 0.44, 2, 0.03);
+const backGeo = new RoundedBoxGeometry(0.46, 0.46, 0.06, 2, 0.03);
+const legGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.44);
+const chairs = [];
+for (let r = 0; r < 11; r++) for (let c = 0; c < 16; c++) {
+  if (c === 7 || c === 8) continue;
+  chairs.push([-5.25 + c * 0.7, 4.0 + r * 1.0]);
+}
+const inst = (geo, mat, n) => { const m = new THREE.InstancedMesh(geo, mat, n); m.castShadow = true; m.receiveShadow = true; scene.add(m); return m; };
+const seats = inst(seatGeo, std({ map: fabric, color: '#fff8ec', roughness: 0.85 }), chairs.length);
+const backs = inst(backGeo, std({ map: fabric, color: '#fff8ec', roughness: 0.85 }), chairs.length);
+const legs = inst(legGeo, std({ color: '#c9a25e', roughness: 0.25, metalness: 1 }), chairs.length * 4);
+const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(1, 1, 1);
+chairs.forEach(([x, z], i) => {
+  seats.setMatrixAt(i, M.compose(new THREE.Vector3(x, 0.46, z), Q, S));
+  const qb = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.08, 0, 0));
+  backs.setMatrixAt(i, M.compose(new THREE.Vector3(x, 0.74, z + 0.21), qb, S));
+  [[-0.19, -0.18], [0.19, -0.18], [-0.19, 0.18], [0.19, 0.18]].forEach(([lx, lz], j) =>
+    legs.setMatrixAt(i * 4 + j, M.compose(new THREE.Vector3(x + lx, 0.22, z + lz), Q, S)));
+});
+
+// lighting
+scene.add(new THREE.HemisphereLight('#fff1dd', '#8a6a4c', 0.45));
+for (const x of [-4.2, 4.2]) for (let z = 4; z < RD; z += 4.8) {
+  const L = new THREE.PointLight('#ffe2b8', 4, 9, 1.5); L.position.set(x, RH - 1.2, z); scene.add(L);
+}
+for (const x of [-1.4, 1.4]) for (let z = 4.5; z < RD; z += 4.8) {
+  const L = new THREE.SpotLight('#ffe6c0', 22, 10, 0.75, 0.8, 1.4); L.position.set(x, RH - 0.05, z); L.target.position.set(x, 0, z);
+  scene.add(L, L.target);
+}
+// stage wash, with shadows
+for (const x of [-3, 3]) {
+  const L = new THREE.SpotLight('#ffe9cc', 60, 14, 0.5, 0.6, 1.4);
+  L.position.set(x, RH - 0.2, 6.5); L.target.position.set(x * 0.3, 0.8, 1.2);
+  L.castShadow = true; L.shadow.mapSize.set(1024, 1024); L.shadow.radius = 5; L.shadow.bias = -0.0005;
+  scene.add(L, L.target);
+}
+// wall grazers on the fabric panels
+for (const side of [-1, 1]) for (let z = 2; z < RD; z += 3) {
+  const L = new THREE.SpotLight('#ffd6a0', 7, 5, 0.6, 0.9, 1.4);
+  L.position.set(side * (RW / 2 - 0.4), RH - 0.05, z); L.target.position.set(side * RW / 2, 0.5, z);
+  scene.add(L, L.target);
+}
+// soft glow from the screen into the room
+const sg = new THREE.RectAreaLight ? new THREE.PointLight('#f4d7b0', 6, 8, 1.5) : null;
+sg.position.set(0, 2.6, 1.0); scene.add(sg);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(W, H), 0.25, 0.5, 0.9));
+composer.addPass(new OutputPass());
+composer.render();
+
+const ctx = out.getContext('2d');
+ctx.drawImage(renderer.domElement, 0, 0);
+const v = ctx.createRadialGradient(W / 2, H * 0.48, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
+v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(25,12,5,0.38)');
+ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+const img = ctx.getImageData(0, 0, W, H), d = img.data;
+for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * 8; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+ctx.putImageData(img, 0, 0);
+document.body.dataset.done = '1';
+</script>
+</body>
+</html>

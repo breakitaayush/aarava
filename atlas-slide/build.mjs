@@ -946,6 +946,112 @@ function auraRoom(W, H, withTitle) {
 </svg>`;
 }
 
+// ---- Mirage: meeting rooms one + two opened into one event space ----
+function mirageRoom(W, H, withTitle) {
+  const B = { l: 380, r: 1540, t: 270, b: 690 };
+  const V0 = { x: 960, y: 500 };
+  const at2 = (px, py, k) => [V0.x + (px - V0.x) * k, V0.y + (py - V0.y) * k];
+  const pt = (p) => p.map((v) => v.toFixed(1)).join(',');
+  const K = 5.0;
+  const tl = [B.l, B.t], tr = [B.r, B.t], bl = [B.l, B.b], br = [B.r, B.b];
+  let room = '';
+  room += `<path d="${P([tl, tr, at2(...tr, K), at2(...tl, K)])}" fill="#efe4d2"/>`;
+  room += `<path d="${P([tl, bl, at2(...bl, K), at2(...tl, K)])}" fill="#e2cfb4"/>`;
+  room += `<path d="${P([tr, br, at2(...br, K), at2(...tr, K)])}" fill="#dcc8ac"/>`;
+  room += `<path d="${P([bl, br, at2(...br, K), at2(...bl, K)])}" fill="url(#mFloor)"/>`;
+  room += `<rect x="${B.l}" y="${B.t}" width="${B.r - B.l}" height="${B.b - B.t}" fill="#eadcc6" stroke="${INK}" stroke-width="1.4"/>`;
+  for (const [a, b] of [[tl, at2(...tl, K)], [tr, at2(...tr, K)], [bl, at2(...bl, K)], [br, at2(...br, K)]])
+    room += `<path d="M${pt(a)} L${pt(b)}" stroke="${INK}" stroke-width="1.4"/>`;
+  // side-wall panelling
+  for (const side of [B.l, B.r]) for (let k = 1.2; k < K; k *= 1.28) {
+    const p = [at2(side, B.t + 60, k), at2(side, B.t + 60, k * 1.2), at2(side, B.b - 40, k * 1.2), at2(side, B.b - 40, k)];
+    room += `<path d="${P(p)}" fill="none" stroke="#b49a78" stroke-width="0.9"/>`;
+  }
+
+  // the partition: a ceiling track across the room, and the folded panels stacked against the left wall
+  const kTrack = 1.9;
+  room += `<path d="M${pt(at2(B.l, B.t, kTrack))} L${pt(at2(B.r, B.t, kTrack))}" stroke="${INK}" stroke-width="3"/>`;
+  room += `<path d="M${pt(at2(B.l, B.t + 8, kTrack))} L${pt(at2(B.r, B.t + 8, kTrack))}" stroke="#8c7a64" stroke-width="1"/>`;
+  for (let i = 0; i < 6; i++) {
+    const x0 = B.l + 6 + i * 13, x1 = x0 + 12;
+    const p = [at2(x0, B.t + 10, kTrack), at2(x1, B.t + 10, kTrack), at2(x1, B.b, kTrack), at2(x0, B.b, kTrack)];
+    room += `<path d="${P(p)}" fill="${i % 2 ? '#cdb898' : '#d8c4a4'}" stroke="${INK}" stroke-width="0.9"/>`;
+  }
+  room += `<path d="${P([at2(B.l, B.t + 10, kTrack - 0.08), at2(B.l + 84, B.t + 10, kTrack - 0.08), at2(B.l + 84, B.t + 10, kTrack), at2(B.l, B.t + 10, kTrack)])}" fill="#bfa987" stroke="${INK}" stroke-width="0.6"/>`;
+
+  // stage + screen showing a desert horizon with a mirage shimmer
+  const sx0 = 700, sx1 = 1220, sy0 = B.t + 50, sy1 = B.t + 300;
+  const hz = sy0 + (sy1 - sy0) * 0.6;
+  let scr = `<rect x="${sx0}" y="${sy0}" width="${sx1 - sx0}" height="${sy1 - sy0}" fill="url(#mSky)"/>`;
+  scr += `<path d="M${sx0},${hz - 6} Q${sx0 + 120},${hz - 40} ${sx0 + 230},${hz - 12} Q${sx0 + 340},${hz + 6} ${sx1},${hz - 28} L${sx1},${sy1} L${sx0},${sy1} Z" fill="#d9a066"/>`;
+  scr += `<path d="M${sx0},${hz + 30} Q${sx0 + 200},${hz + 4} ${sx1},${hz + 40} L${sx1},${sy1} L${sx0},${sy1} Z" fill="#c98b52"/>`;
+  scr += `<rect x="${sx0 + 140}" y="${hz - 4}" width="240" height="14" fill="#b9d3e0" opacity="0.75" filter="url(#mSoft)"/>`;
+  for (let i = 0; i < 5; i++) scr += `<line x1="${sx0 + 150 + i * 9}" y1="${hz + i * 2.4}" x2="${sx0 + 360 - i * 12}" y2="${hz + i * 2.4}" stroke="#eef6f8" stroke-width="1" opacity="0.7"/>`;
+  room += `<svg x="${sx0}" y="${sy0}" width="${sx1 - sx0}" height="${sy1 - sy0}" viewBox="${sx0} ${sy0} ${sx1 - sx0} ${sy1 - sy0}" overflow="hidden">${scr}</svg>`;
+  room += `<rect x="${sx0 - 8}" y="${sy0 - 8}" width="${sx1 - sx0 + 16}" height="${sy1 - sy0 + 16}" fill="none" stroke="${INK}" stroke-width="2"/>`;
+  const st = [at2(560, B.b, 1), at2(1360, B.b, 1), at2(1360, B.b, 1.35), at2(560, B.b, 1.35)];
+  const stTop = st.map(([x, y]) => [x, y - 26]);
+  room += `<path d="${P([stTop[3], stTop[2], st[2], st[3]])}" fill="#8f6a46" stroke="${INK}" stroke-width="1"/>`;
+  room += `<path d="${P(stTop)}" fill="#b48a5e" stroke="${INK}" stroke-width="1"/>`;
+  const lec = at2(1250, B.b, 1.2);
+  room += `<path d="M${lec[0] - 18},${lec[1] - 26} L${lec[0] + 18},${lec[1] - 26} L${lec[0] + 14},${lec[1] - 100} L${lec[0] - 14},${lec[1] - 100} Z" fill="#6f5238" stroke="${INK}" stroke-width="1"/>`;
+
+  // ceiling lights in two lines, each one shimmering in the polished floor
+  let lights = '', refl = '';
+  for (const x of [700, 1220]) for (let k = 1.25; k < K; k *= 1.3) {
+    const c = at2(x, B.t + 2, k), f = at2(x, B.b, k);
+    const r = 7 * k;
+    lights += `<ellipse cx="${c[0].toFixed(1)}" cy="${(c[1] + r * 0.4).toFixed(1)}" rx="${(r * 2.4).toFixed(1)}" ry="${(r * 1.1).toFixed(1)}" fill="#fff0c8" opacity="0.5" filter="url(#mSoft)"/>
+      <ellipse cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" rx="${r.toFixed(1)}" ry="${(r * 0.32).toFixed(1)}" fill="#fff6dc" stroke="${INK}" stroke-width="0.6"/>`;
+    refl += `<ellipse cx="${f[0].toFixed(1)}" cy="${(f[1] - 4 * k).toFixed(1)}" rx="${(r * 0.9).toFixed(1)}" ry="${(r * 3.2).toFixed(1)}" fill="#fff3d6" opacity="0.4" filter="url(#mWave)"/>`;
+  }
+  refl += `<rect x="${sx0 + 40}" y="${B.b + 30}" width="${sx1 - sx0 - 80}" height="60" fill="#e7c9a2" opacity="0.35" filter="url(#mWave)"/>`;
+
+  // event set-up: rows of chairs facing the stage, with a centre aisle
+  let rows = '';
+  for (let r = 0; r < 8; r++) {
+    const k = 1.55 + r * 0.38;
+    for (let c = 0; c < 12; c++) {
+      if (c === 5 || c === 6) continue;
+      const wx = 470 + c * 90 + (c > 6 ? 0 : 0);
+      const base = at2(wx, B.b, k), topp = at2(wx, B.b - 95, k);
+      const w = 26 * k, h = base[1] - topp[1];
+      rows += `<rect x="${(base[0] - w / 2).toFixed(1)}" y="${topp[1].toFixed(1)}" width="${w.toFixed(1)}" height="${(h * 0.62).toFixed(1)}" rx="${(5 * k).toFixed(1)}" fill="#a9785a" stroke="${INK}" stroke-width="${(0.35 * k).toFixed(2)}"/>
+        <rect x="${(base[0] - w / 2).toFixed(1)}" y="${(topp[1] + h * 0.6).toFixed(1)}" width="${w.toFixed(1)}" height="${(h * 0.1).toFixed(1)}" fill="#8b6047"/>
+        <line x1="${(base[0] - w * 0.4).toFixed(1)}" y1="${(topp[1] + h * 0.7).toFixed(1)}" x2="${(base[0] - w * 0.42).toFixed(1)}" y2="${base[1].toFixed(1)}" stroke="${INK}" stroke-width="${(0.5 * k).toFixed(2)}"/>
+        <line x1="${(base[0] + w * 0.4).toFixed(1)}" y1="${(topp[1] + h * 0.7).toFixed(1)}" x2="${(base[0] + w * 0.42).toFixed(1)}" y2="${base[1].toFixed(1)}" stroke="${INK}" stroke-width="${(0.5 * k).toFixed(2)}"/>`;
+    }
+  }
+
+  const vbx = (1920 - W) / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbx} 0 ${W} ${H}" width="${W}" height="${H}">
+  ${defs.replace('</defs>', `
+    <linearGradient id="mSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb3cf"/><stop offset="0.55" stop-color="#f1dcc0"/><stop offset="1" stop-color="#f3c995"/></linearGradient>
+    <linearGradient id="mFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdb08a"/><stop offset="1" stop-color="#b8956c"/></linearGradient>
+    <filter id="mSoft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="mWave" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01 0.12" numOctaves="2" seed="4" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="18" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feGaussianBlur in="d" stdDeviation="3"/>
+    </filter>
+  </defs>`)}
+  <rect x="-200" width="2400" height="1200" fill="#efe6d1"/>
+  <g filter="url(#ink)">${room}</g>
+  ${refl}
+  ${lights}
+  <g filter="url(#ink)">${rows}</g>
+  <rect x="-200" width="2400" height="1200" filter="url(#blotch)" opacity="0.5"/>
+  <rect x="-200" width="2400" height="1200" filter="url(#grain)"/>
+  ${withTitle ? `
+  <rect x="${960 - 280}" y="${H - 150}" width="560" height="118" fill="#f7ebcf" stroke="${INK}" stroke-width="1"/>
+  <rect x="${960 - 272}" y="${H - 142}" width="544" height="102" fill="none" stroke="${INK}" stroke-width="0.5"/>
+  <text x="960" y="${H - 86}" text-anchor="middle" font-family="Cinzel" font-size="50" letter-spacing="18" fill="${INK}">MIRAGE</text>
+  <text x="960" y="${H - 54}" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="24" fill="${INK}">meeting rooms one + two &#183; two rooms, one horizon</text>` : ''}
+  <rect x="${vbx + 28}" y="28" width="${W - 56}" height="${H - 56}" fill="none" stroke="${INK}" stroke-width="1.3" opacity="0.8"/>
+  <rect x="${vbx + 38}" y="38" width="${W - 76}" height="${H - 76}" fill="none" stroke="${INK}" stroke-width="0.5" opacity="0.6"/>
+</svg>`;
+}
+
 const page = (svg, w, h) =>
   `<!doctype html><html><head><meta charset="utf-8"><style>${fontFaces}html,body{margin:0;background:#e9ddc2}.ns *{vector-effect:non-scaling-stroke}svg{display:block}</style></head><body>${svg}</body></html>`;
 
@@ -987,6 +1093,12 @@ jobs.push(
   ['aura-meeting-wide.png', auraRoom(1920, 1080, true), 1920, 1080],
   ['aura-meeting-wide-plain.png', auraRoom(1920, 1080, false), 1920, 1080],
   ['aura-meeting-square.png', auraRoom(1080, 1080, true), 1080, 1080],
+);
+seed = 69;
+jobs.push(
+  ['mirage-event-wide.png', mirageRoom(1920, 1080, true), 1920, 1080],
+  ['mirage-event-wide-plain.png', mirageRoom(1920, 1080, false), 1920, 1080],
+  ['mirage-event-square.png', mirageRoom(1080, 1080, true), 1080, 1080],
 );
 const only = process.argv[2];
 if (only) jobs.splice(0, jobs.length, ...jobs.filter((x) => x[0].startsWith(only)));
