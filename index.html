@@ -21,10 +21,12 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://breakitaayush.github.io/aarva/assets/og-image.jpg" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Gilda+Display&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
+  <!-- Fonts are self-hosted so they always load (no Google dependency). -->
+  <link rel="preload" href="assets/fonts/gilda-display-latin-e62fbd.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/cinzel-latin-63551c.woff2" as="font" type="font/woff2" crossorigin />
+  <!-- Bump ?v= whenever css/js change so phones fetch the new files instead of a saved copy. -->
+  <link rel="stylesheet" href="css/fonts.css?v=2" />
+  <link rel="stylesheet" href="css/style.css?v=2" />
 </head>
 <body class="locked">
 
@@ -180,7 +182,7 @@
   <div class="toast" id="toast" role="status"></div>
   <audio id="bgm" loop preload="auto"></audio>
 
-  <script src="js/content.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/content.js?v=2"></script>
+  <script src="js/main.js?v=2"></script>
 </body>
 </html>
