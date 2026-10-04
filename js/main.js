@@ -16,7 +16,7 @@
     else el.remove();
   });
   const names = `${W.couple.groom} & ${W.couple.bride}`;
-  $$("[data-names]").forEach((el) => (el.textContent = names));
+  $$("[data-names]").forEach((el) => (el.innerHTML = `${esc(W.couple.groom)} <span class="amp">&amp;</span> ${esc(W.couple.bride)}`));
   $$("[data-mono]").forEach((el) => (el.textContent = W.couple.monogram[el.dataset.mono]));
   $$("[data-monogram]").forEach((el) => (el.textContent = `${W.couple.monogram[0]} ✦ ${W.couple.monogram[1]}`));
 
@@ -152,8 +152,8 @@
     const stamp = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
     const text = (s) => String(s).replace(/[,;\\]/g, (m) => "\\" + m).replace(/\n/g, "\\n");
     const ics = [
-      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Aarava//Wedding Invite//EN", "BEGIN:VEVENT",
-      `UID:${stamp(e.s)}-${e.name.replace(/\W/g, "")}@aarava`,
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Aarva//Wedding Invite//EN", "BEGIN:VEVENT",
+      `UID:${stamp(e.s)}-${e.name.replace(/\W/g, "")}@aarva`,
       `DTSTAMP:${stamp(new Date())}`, `DTSTART:${stamp(e.s)}`, `DTEND:${stamp(e.e)}`,
       `SUMMARY:${text(`${e.name} · ${names}`)}`,
       `LOCATION:${text(`${W.venue.name}, ${W.venue.address}`)}`,
