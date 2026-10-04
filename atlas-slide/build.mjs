@@ -14,6 +14,19 @@ const j = (a) => (rnd() - 0.5) * a;
 const INK = '#3b2f24';
 const RUST = '#9a4b2b';
 const R = 300;
+// palettes: the sepia plate, and a hand-tinted (watercolour wash) version
+const SEPIA = {
+  side: '#e8dcc0', ceil: '#ece2c9', col: '#efe5cf', panel: '#f2e9d5', back: '#efe6d1', glass: '#f4ecd9',
+  floor: '#e6d6b4', roseBase: '#ecdfc2', roseDiag: '#e3d2ad', roseMain: '#f3ead6', rose8: 'none',
+  drop: '#f6efdd', ring: '#3b2f24', route: '#9a4b2b', sea: 'url(#sea)', glow: '#fff6dc', plate: '#efe6d1', curtains: false,
+};
+const TINT = {
+  side: '#a9c6bb', ceil: '#f2dfb8', col: '#f6e9cc', panel: '#cfe2df', back: '#bdd4c9', glass: 'url(#dusk)',
+  floor: '#d39e62', roseBase: '#efd7a2', roseDiag: '#c9973a', roseMain: '#f8eed6', rose8: '#2f5674',
+  drop: '#fffaf0', ring: '#a7742a', route: '#c4472f', sea: 'url(#seaTint)', glow: '#ffe7a8', plate: '#f7ebcf', curtains: true,
+};
+let C = SEPIA;
+
 const LAT0 = 22 * Math.PI / 180;
 const LON0 = -18 * Math.PI / 180;
 const rad = (d) => d * Math.PI / 180;
@@ -132,17 +145,17 @@ function globe() {
   const mx = m.x * 1.0, my = m.y * 1.0;
   return `
   <g filter="url(#ink)">
-    <circle r="${R + 62}" fill="none" stroke="${INK}" stroke-width="0.6" opacity="0.55"/>
-    <circle r="${R + 40}" fill="none" stroke="${INK}" stroke-width="1.1"/>
-    <path d="${ringTicks(R + 40)}" stroke="${INK}" stroke-width="0.7" fill="none"/>
+    <circle r="${R + 62}" fill="none" stroke="${C.ring}" stroke-width="0.6" opacity="0.55"/>
+    <circle r="${R + 40}" fill="none" stroke="${C.ring}" stroke-width="${C.curtains ? 2.2 : 1.1}"/>
+    <path d="${ringTicks(R + 40)}" stroke="${C.ring}" stroke-width="0.7" fill="none"/>
     <circle r="${R + 22}" fill="none" stroke="${INK}" stroke-width="0.5" opacity="0.7"/>
-    <circle r="${R}" fill="url(#sea)" stroke="${INK}" stroke-width="2"/>
+    <circle r="${R}" fill="${C.sea}" stroke="${INK}" stroke-width="2"/>
     <g clip-path="url(#disc)">
       <path d="${hatching()}" stroke="${INK}" stroke-width="0.55" mask="url(#shade)" fill="none"/>
       <path d="${graticule()}" stroke="${INK}" stroke-width="0.75" fill="none" opacity="0.8"/>
       <path d="${equator()}" stroke="${INK}" stroke-width="1.1" fill="none" stroke-dasharray="7 4"/>
     </g>
-    <path d="${routes}" stroke="${RUST}" stroke-width="1.6" fill="none" stroke-dasharray="2 5" stroke-linecap="round"/>
+    <path d="${routes}" stroke="${C.route}" stroke-width="1.6" fill="none" stroke-dasharray="2 5" stroke-linecap="round"/>
     ${dots}
     <circle cx="${mx}" cy="${my}" r="15" fill="none" stroke="${RUST}" stroke-width="1"/>
     <circle cx="${mx}" cy="${my}" r="8" fill="none" stroke="${RUST}" stroke-width="1.4"/>
@@ -184,6 +197,12 @@ const defs = `
     <stop offset="1" stop-color="#fff"/>
   </radialGradient>
   <mask id="shade"><rect x="-400" y="-400" width="800" height="800" fill="url(#shadeGrad)"/></mask>
+  <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#6f9cc4"/><stop offset="0.55" stop-color="#b9c9d6"/><stop offset="1" stop-color="#f3c79a"/>
+  </linearGradient>
+  <radialGradient id="seaTint" cx="36%" cy="32%" r="78%">
+    <stop offset="0" stop-color="#cfe6ea"/><stop offset="0.6" stop-color="#7fb0c6"/><stop offset="1" stop-color="#3f7596"/>
+  </radialGradient>
   <clipPath id="disc"><circle r="${R}"/></clipPath>
 </defs>`;
 
@@ -230,7 +249,7 @@ const quad = (pts, fill, extra = '') =>
 
 function archWindow(x, w, top, bottom) {
   const r = w / 2, cx = x + r, spring = top + r;
-  let s = `<path d="M${x},${bottom} L${x},${spring} A${r},${r} 0 0 1 ${x + w},${spring} L${x + w},${bottom} Z" fill="#f4ecd9" stroke="${INK}" stroke-width="1.4"/>`;
+  let s = `<path d="M${x},${bottom} L${x},${spring} A${r},${r} 0 0 1 ${x + w},${spring} L${x + w},${bottom} Z" fill="${C.glass}" stroke="${INK}" stroke-width="1.4"/>`;
   s += `<path d="M${x - 9},${bottom + 6} L${x - 9},${spring} A${r + 9},${r + 9} 0 0 1 ${x + w + 9},${spring} L${x + w + 9},${bottom + 6}" fill="none" stroke="${INK}" stroke-width="0.7"/>`;
   // mullions and panes
   s += L([cx, top], [cx, bottom], 0.8);
@@ -241,10 +260,30 @@ function archWindow(x, w, top, bottom) {
   return s;
 }
 
+function curtains(x, w, top, bottom) {
+  let s = '';
+  for (const dir of [-1, 1]) {
+    const edge = dir < 0 ? x - 16 : x + w + 16;
+    const inner = dir < 0 ? x + w * 0.22 : x + w * 0.78;
+    const tie = top + (bottom - top) * 0.55;
+    const d = `M${edge},${top} L${inner},${top} Q${inner - dir * 4},${tie - 60} ${edge + dir * 10},${tie} ` +
+      `Q${edge + dir * 2},${tie + 70} ${edge + dir * 14},${bottom} L${edge - dir * 10},${bottom} Z`;
+    s += `<path d="${d}" fill="#9b2f3c" stroke="${INK}" stroke-width="1"/>`;
+    for (let f = 1; f <= 3; f++) {
+      const fx = edge + (inner - edge) * (f / 4);
+      s += `<path d="M${fx},${top + 2} Q${fx - dir * 6},${tie - 40} ${edge + dir * (2 + f)},${tie} " stroke="#5e1b24" stroke-width="0.8" fill="none"/>`;
+    }
+    s += `<ellipse cx="${edge + dir * 8}" cy="${tie}" rx="9" ry="4" fill="#d3a447" stroke="${INK}" stroke-width="0.7"/>`;
+  }
+  s += `<path d="M${x - 22},${top - 4} Q${x + w / 2},${top + 26} ${x + w + 22},${top - 4} L${x + w + 22},${top - 12} L${x - 22},${top - 12} Z" fill="#8a2935" stroke="${INK}" stroke-width="0.9"/>`;
+  s += `<line x1="${x - 26}" y1="${top - 12}" x2="${x + w + 26}" y2="${top - 12}" stroke="#a7742a" stroke-width="3" stroke-linecap="round"/>`;
+  return s;
+}
+
 function floor() {
   let s = '';
   const fl = [BW.l, BW.b], fr = [BW.r, BW.b];
-  s += quad([fl, fr, at(...fr, 4.2), at(...fl, 4.2)], '#e6d6b4');
+  s += quad([fl, fr, at(...fr, 4.2), at(...fl, 4.2)], C.floor);
   // boards running toward the vanishing point
   for (let x = BW.l; x <= BW.r; x += 40) s += L([x, BW.b], at(x, BW.b, 4.2), 0.45, 'opacity="0.7"');
   // cross joints, spaced the way a real floor recedes
@@ -261,9 +300,9 @@ function walls() {
   const tl = [BW.l, BW.t], tr = [BW.r, BW.t], bl = [BW.l, BW.b], br = [BW.r, BW.b];
   const K = 4.2;
   // side walls + ceiling fills
-  s += quad([tl, bl, at(...bl, K), at(...tl, K)], '#e8dcc0');
-  s += quad([tr, br, at(...br, K), at(...tr, K)], '#e8dcc0');
-  s += quad([tl, tr, at(...tr, K), at(...tl, K)], '#ece2c9');
+  s += quad([tl, bl, at(...bl, K), at(...tl, K)], C.side);
+  s += quad([tr, br, at(...br, K), at(...tr, K)], C.side);
+  s += quad([tl, tr, at(...tr, K), at(...tl, K)], C.ceil);
   // side-wall columns with mirrored arches between them
   const ks = [1.25, 1.6, 2.1, 2.9, 4.0];
   for (const side of [BW.l, BW.r]) {
@@ -271,7 +310,7 @@ function walls() {
       const k = ks[i], w = 22 * k * (side === BW.l ? 1 : -1);
       const top = at(side, BW.t + 38, k), bot = at(side, BW.b, k);
       const top2 = at(side + w / k, BW.t + 38, k), bot2 = at(side + w / k, BW.b, k);
-      s += quad([top, top2, bot2, bot], '#efe5cf', `stroke="${INK}" stroke-width="1"`);
+      s += quad([top, top2, bot2, bot], C.col, `stroke="${INK}" stroke-width="1"`);
       s += L(at(side, BW.b - 30, k), at(side + w / k, BW.b - 30, k), 0.7);
       s += L(at(side, BW.t + 60, k), at(side + w / k, BW.t + 60, k), 0.7);
       if (i < ks.length - 1) {
@@ -280,7 +319,7 @@ function walls() {
         const pad = 0.12;
         const ka = k + pad, kb = k2 - pad * 1.6;
         const p = [at(side, BW.t + 80, ka), at(side, BW.t + 80, kb), at(side, BW.b - 50, kb), at(side, BW.b - 50, ka)];
-        s += quad(p, '#f2e9d5', `stroke="${INK}" stroke-width="0.7"`);
+        s += quad(p, C.panel, `stroke="${INK}" stroke-width="0.7"`);
         const c1 = at(side, BW.t + 140, ka), c2 = at(side, BW.t + 140, kb);
         s += L(c1, c2, 0.5, 'opacity="0.7"');
       }
@@ -298,10 +337,11 @@ function walls() {
   for (const k of [1.4, 2.0, 2.9]) s += L(at(BW.l, BW.t, k), at(BW.r, BW.t, k), 0.5, 'opacity="0.6"');
   // room edges
   s += L(tl, at(...tl, K), 1.4) + L(tr, at(...tr, K), 1.4) + L(bl, at(...bl, K), 1.4) + L(br, at(...br, K), 1.4);
-  s += `<rect x="${BW.l}" y="${BW.t}" width="${BW.r - BW.l}" height="${BW.b - BW.t}" fill="#efe6d1" stroke="${INK}" stroke-width="1.4"/>`;
+  s += `<rect x="${BW.l}" y="${BW.t}" width="${BW.r - BW.l}" height="${BW.b - BW.t}" fill="${C.back}" stroke="${INK}" stroke-width="1.4"/>`;
   // back wall: three tall arched windows with pilasters
   const ww = 130, gap = (BW.r - BW.l - ww * 3) / 4;
   for (let i = 0; i < 3; i++) s += archWindow(BW.l + gap + i * (ww + gap), ww, BW.t + 70, BW.b - 30);
+  if (C.curtains) for (let i = 0; i < 3; i++) s += curtains(BW.l + gap + i * (ww + gap), ww, BW.t + 60, BW.b - 24);
   for (let i = 0; i <= 3; i++) {
     const x = BW.l + gap / 2 + i * (ww + gap) - 9;
     if (i === 0 || i === 3) continue;
@@ -327,12 +367,12 @@ function roseOnFloor(cx, cy, s) {
     ticks += `M${(Math.cos(t) * s * 1.02).toFixed(1)},${(Math.sin(t) * s * 1.02).toFixed(1)} L${(Math.cos(t) * (s * 1.02 + l)).toFixed(1)},${(Math.sin(t) * (s * 1.02 + l)).toFixed(1)} `;
   }
   return `<g transform="translate(${cx} ${cy}) scale(1 0.26)" class="ns">
-    <circle r="${s * 1.18}" fill="#ecdfc2" stroke="${INK}" stroke-width="1.2"/>
+    <circle r="${s * 1.18}" fill="${C.roseBase}" stroke="${INK}" stroke-width="1.2"/>
     <circle r="${s * 1.02}" fill="none" stroke="${INK}" stroke-width="0.8"/>
     <path d="${ticks}" stroke="${INK}" stroke-width="0.8" fill="none"/>
-    <polygon points="${pts(s * 0.62, s * 0.12, 8, Math.PI / 8)}" fill="none" stroke="${INK}" stroke-width="0.8"/>
-    <polygon points="${pts(s * 0.95, s * 0.16, 4, Math.PI / 4)}" fill="#e3d2ad" stroke="${INK}" stroke-width="0.9"/>
-    <polygon points="${pts(s * 0.98, s * 0.18, 4, 0)}" fill="#f3ead6" stroke="${INK}" stroke-width="1.1"/>
+    <polygon points="${pts(s * 0.62, s * 0.12, 8, Math.PI / 8)}" fill="${C.rose8}" stroke="${INK}" stroke-width="0.8"/>
+    <polygon points="${pts(s * 0.95, s * 0.16, 4, Math.PI / 4)}" fill="${C.roseDiag}" stroke="${INK}" stroke-width="0.9"/>
+    <polygon points="${pts(s * 0.98, s * 0.18, 4, 0)}" fill="${C.roseMain}" stroke="${INK}" stroke-width="1.1"/>
     <path d="M0,${-s * 0.98} L${s * 0.09},${-s * 0.2} L0,${-s * 0.12} Z" fill="${RUST}" stroke="${INK}" stroke-width="0.6"/>
     <circle r="${s * 0.05}" fill="${RUST}"/><circle r="${s * 0.1}" fill="none" stroke="${RUST}" stroke-width="1"/>
   </g>`;
@@ -343,7 +383,7 @@ function paths(cx, cy) {
   const starts = [[150, 1080], [1770, 1080], [320, 822], [1600, 822], [960, 1100]];
   return starts.map(([x, y], i) => {
     const mx = (x + cx) / 2 + (i % 2 ? -1 : 1) * 120, my = (y + cy) / 2 + 40;
-    return `<path d="M${x},${y} Q${mx},${my} ${cx},${cy}" stroke="${RUST}" stroke-width="2" fill="none" stroke-dasharray="2 9" stroke-linecap="round" opacity="0.9"/>`;
+    return `<path d="M${x},${y} Q${mx},${my} ${cx},${cy}" stroke="${C.route}" stroke-width="2" fill="none" stroke-dasharray="2 9" stroke-linecap="round" opacity="0.9"/>`;
   }).join('');
 }
 
@@ -354,7 +394,7 @@ function chandelier(cx, cy, scale) {
     const a = rad(i * 20);
     const x = cx + Math.cos(a) * (R + 40) * scale, y = cy + Math.sin(a) * (R + 40) * scale * 0.32 + 4;
     drops += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y + 14).toFixed(1)}" stroke="${INK}" stroke-width="0.6"/>
-      <path d="M${x.toFixed(1)},${(y + 14).toFixed(1)} q-3.5,6 0,10 q3.5,-4 0,-10 Z" fill="#f6efdd" stroke="${INK}" stroke-width="0.6"/>`;
+      <path d="M${x.toFixed(1)},${(y + 14).toFixed(1)} q-3.5,6 0,10 q3.5,-4 0,-10 Z" fill="${C.drop}" stroke="${INK}" stroke-width="0.6"/>`;
   }
   return `
     <circle cx="${cx}" cy="${cy}" r="${r * 2.1}" fill="url(#glow)"/>
@@ -370,7 +410,7 @@ function chandelier(cx, cy, scale) {
 function ballroom(W, H, withTitle) {
   const roseC = [960, 880];
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${W === 1920 ? '0 0 1920 1080' : `${(1920 - W) / 2} 0 ${W} ${H}`}" width="${W}" height="${H}">
-  ${defs.replace('</defs>', `<radialGradient id="glow"><stop offset="0" stop-color="#fff6dc" stop-opacity="0.9"/><stop offset="1" stop-color="#fff6dc" stop-opacity="0"/></radialGradient></defs>`)}
+  ${defs.replace('</defs>', `<radialGradient id="glow"><stop offset="0" stop-color="${C.glow}" stop-opacity="0.9"/><stop offset="1" stop-color="${C.glow}" stop-opacity="0"/></radialGradient></defs>`)}
   <rect x="-200" width="2400" height="1200" fill="url(#paper)"/>
   <g filter="url(#ink)">${walls()}${floor()}</g>
   <g filter="url(#ink)">${roseOnFloor(roseC[0], roseC[1], 300)}${paths(roseC[0], roseC[1])}</g>
@@ -378,7 +418,7 @@ function ballroom(W, H, withTitle) {
   <rect x="-200" width="2400" height="1200" filter="url(#blotch)"/>
   <rect x="-200" width="2400" height="1200" filter="url(#grain)"/>
   ${withTitle ? `
-  <rect x="${960 - 260}" y="${H - 150}" width="520" height="118" fill="#efe6d1" stroke="${INK}" stroke-width="1"/>
+  <rect x="${960 - 260}" y="${H - 150}" width="520" height="118" fill="${C.plate}" stroke="${INK}" stroke-width="1"/>
   <rect x="${960 - 252}" y="${H - 142}" width="504" height="102" fill="none" stroke="${INK}" stroke-width="0.5"/>
   <text x="960" y="${H - 86}" text-anchor="middle" font-family="Cinzel" font-size="50" letter-spacing="18" fill="${INK}">ATLAS</text>
   <text x="960" y="${H - 54}" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="24" fill="${INK}">the ballroom &#183; where every road meets</text>` : ''}
@@ -398,6 +438,13 @@ const jobs = [
   ['atlas-ballroom-wide-plain.png', ballroom(1920, 1080, false), 1920, 1080],
   ['atlas-ballroom-square.png', ballroom(1080, 1080, true), 1080, 1080],
 ];
+C = TINT;
+seed = 7;
+jobs.push(
+  ['atlas-ballroom-colour-wide.png', ballroom(1920, 1080, true), 1920, 1080],
+  ['atlas-ballroom-colour-wide-plain.png', ballroom(1920, 1080, false), 1920, 1080],
+  ['atlas-ballroom-colour-square.png', ballroom(1080, 1080, true), 1080, 1080],
+);
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 for (const [name, svg, w, h] of jobs) {
