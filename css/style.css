@@ -23,7 +23,7 @@
 
   --serif: "Cormorant Garamond", Georgia, serif;
   --display: "Cinzel", "Cormorant Garamond", serif;
-  --script: "Pinyon Script", cursive;
+  --script: "Gilda Display", "Cormorant Garamond", Georgia, serif;
   --hindi: "Tiro Devanagari Hindi", serif;
 
   --nav-h: 56px;
@@ -254,7 +254,8 @@ button { font: inherit; }
   margin: -6px 0 0;
   padding: .1em .3em;
   font-family: var(--script);
-  font-size: clamp(2rem, 8vw, 2.6rem);
+  font-size: clamp(1.9rem, 7.5vw, 2.4rem);
+  letter-spacing: .02em;
   background: var(--gold-text);
   -webkit-background-clip: text;
   background-clip: text;
@@ -468,8 +469,9 @@ button { font: inherit; }
   align-items: center;
   font-family: var(--script);
   font-weight: 400;
-  font-size: clamp(2.9rem, 13vw, 4.4rem);
-  line-height: 1.05;
+  font-size: clamp(2.7rem, 12vw, 4rem);
+  line-height: 1.08;
+  letter-spacing: .02em;
   background: var(--gold-text);
   -webkit-background-clip: text;
   background-clip: text;
@@ -477,10 +479,8 @@ button { font: inherit; }
   filter: drop-shadow(0 2px 0 rgba(0,0,0,.25));
 }
 .names .amp { font-size: .55em; line-height: 1.1; }
-/* Pinyon's ampersand is hard to read — use the italic serif one */
-.amp { font-family: var(--serif); font-style: italic; font-weight: 500; }
 .gate-names .amp,
-.closing-names .amp { font-size: .75em; }
+.closing-names .amp { font-size: .85em; }
 .hindi-title {
   margin: 6px 0 0;
   font-size: clamp(1.3rem, 5.5vw, 1.7rem);
@@ -540,7 +540,7 @@ button { font: inherit; }
 }
 .countdown .cd-done {
   font-family: var(--script);
-  font-size: 2rem;
+  font-size: 1.6rem;
   color: var(--gold-light);
 }
 
@@ -1101,7 +1101,7 @@ button { font: inherit; }
 .q-result-title {
   margin: 4px 0 0;
   font-family: var(--script);
-  font-size: 3rem;
+  font-size: 2.4rem;
   line-height: 1.1;
   color: var(--maroon);
 }
@@ -1178,7 +1178,7 @@ button { font: inherit; }
   padding: .1em .3em .1em 0;
   font-family: var(--script);
   font-weight: 400;
-  font-size: clamp(2.6rem, 9vw, 3.6rem);
+  font-size: clamp(2.1rem, 8vw, 3rem);
   line-height: 1.1;
   background: var(--gold-text);
   -webkit-background-clip: text;
@@ -1278,7 +1278,8 @@ button { font: inherit; }
   margin: 8px 0;
   padding: .1em .3em;
   font-family: var(--script);
-  font-size: clamp(3rem, 12vw, 4.6rem);
+  font-size: clamp(2.3rem, 10vw, 4rem);
+  letter-spacing: .02em;
   line-height: 1.1;
   background: var(--gold-text);
   -webkit-background-clip: text;
