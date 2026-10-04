@@ -427,6 +427,175 @@ function ballroom(W, H, withTitle) {
 </svg>`;
 }
 
+// ---- Halo meeting room: round table under a ring light, a sun-halo photograph on the wall ----
+const HV = { x: 960, y: 520 };
+const HB = { l: 540, r: 1380, t: 250, b: 700 };
+const hat = (px, py, k) => [HV.x + (px - HV.x) * k, HV.y + (py - HV.y) * k];
+const P = (pts) => 'M' + pts.map((p) => p.map((v) => (v + j(0.8)).toFixed(1)).join(',')).join(' L') + ' Z';
+
+function haloPhoto(x, y, w, h) {
+  const sx = x + w * 0.5, sy = y + h * 0.36, hr = h * 0.3;
+  let ridge = `M${x},${y + h * 0.78}`;
+  const peaks = [[0.08, 0.6], [0.2, 0.7], [0.33, 0.5], [0.45, 0.66], [0.58, 0.55], [0.7, 0.68], [0.82, 0.52], [0.93, 0.66], [1, 0.62]];
+  for (const [px, py] of peaks) ridge += ` L${(x + w * px).toFixed(1)},${(y + h * py).toFixed(1)}`;
+  ridge += ` L${x + w},${y + h} L${x},${y + h} Z`;
+  let snow = '';
+  for (let i = 0; i < 26; i++) {
+    const px = x + w * (0.05 + rnd() * 0.9), py = y + h * (0.72 + rnd() * 0.22);
+    snow += `<path d="M${px.toFixed(1)},${py.toFixed(1)} l${(6 + rnd() * 10).toFixed(1)},${(-3 - rnd() * 4).toFixed(1)}" stroke="#7f95a8" stroke-width="0.6" opacity="0.6"/>`;
+  }
+  return `
+  <rect x="${x - 26}" y="${y - 26}" width="${w + 52}" height="${h + 52}" fill="#3a3129" stroke="${INK}" stroke-width="1.2"/>
+  <rect x="${x - 18}" y="${y - 18}" width="${w + 36}" height="${h + 36}" fill="#f4efe4"/>
+  <svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${x} ${y} ${w} ${h}" overflow="hidden">
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#hSky)"/>
+    <circle cx="${sx}" cy="${sy}" r="${hr * 1.35}" fill="url(#hSun)"/>
+    <circle cx="${sx}" cy="${sy}" r="${hr}" fill="none" stroke="#e8a37a" stroke-width="3" opacity="0.55"/>
+    <circle cx="${sx}" cy="${sy}" r="${hr + 4}" fill="none" stroke="#fff6e0" stroke-width="4" opacity="0.85"/>
+    <circle cx="${sx}" cy="${sy}" r="${hr + 9}" fill="none" stroke="#9cc0dc" stroke-width="4" opacity="0.5"/>
+    <circle cx="${sx}" cy="${sy}" r="${h * 0.05}" fill="#fffbef"/>
+    <path d="${ridge}" fill="#e9eef2" stroke="#6d7f8f" stroke-width="1"/>
+    <path d="M${x},${y + h * 0.86} Q${x + w * 0.5},${y + h * 0.78} ${x + w},${y + h * 0.88} L${x + w},${y + h} L${x},${y + h} Z" fill="#c9d6e0"/>
+    ${snow}
+  </svg>
+  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${INK}" stroke-width="0.8"/>`;
+}
+
+function chair(cx, cy, s, front) {
+  const seat = '#9c8f82', back = '#8a7d71';
+  if (front) {
+    // seen from behind: tall rounded backrest covering part of the table edge
+    const w = 74 * s, h = 112 * s;
+    return `<g filter="url(#ink)">
+      <rect x="${cx - w / 2}" y="${cy - h * 0.45}" width="${w}" height="${h}" rx="${18 * s}" fill="${back}" stroke="${INK}" stroke-width="1.1"/>
+      <path d="M${cx - w * 0.36},${cy - h * 0.3} Q${cx},${cy - h * 0.36} ${cx + w * 0.36},${cy - h * 0.3}" stroke="#6f645a" stroke-width="1" fill="none"/>
+      <line x1="${cx - w * 0.3}" y1="${cy + h * 0.55}" x2="${cx - w * 0.34}" y2="${cy + h * 0.85}" stroke="${INK}" stroke-width="2"/>
+      <line x1="${cx + w * 0.3}" y1="${cy + h * 0.55}" x2="${cx + w * 0.34}" y2="${cy + h * 0.85}" stroke="${INK}" stroke-width="2"/>
+    </g>`;
+  }
+  const w = 64 * s, h = 92 * s;
+  return `<g filter="url(#ink)">
+    <rect x="${cx - w / 2}" y="${cy - h}" width="${w}" height="${h}" rx="${14 * s}" fill="${back}" stroke="${INK}" stroke-width="1"/>
+    <rect x="${cx - w * 0.42}" y="${cy - h * 0.82}" width="${w * 0.84}" height="${h * 0.62}" rx="${10 * s}" fill="${seat}" opacity="0.7"/>
+  </g>`;
+}
+
+function haloRoom(W, H, withTitle) {
+  const K = 4.2;
+  const tl = [HB.l, HB.t], tr = [HB.r, HB.t], bl = [HB.l, HB.b], br = [HB.r, HB.b];
+  let room = '';
+  room += `<path d="${P([tl, tr, hat(...tr, K), hat(...tl, K)])}" fill="#f3ead9"/>`;
+  room += `<path d="${P([tl, bl, hat(...bl, K), hat(...tl, K)])}" fill="#e3d5bf"/>`;
+  room += `<path d="${P([tr, br, hat(...br, K), hat(...tr, K)])}" fill="#ddcdb5"/>`;
+  room += `<path d="${P([bl, br, hat(...br, K), hat(...bl, K)])}" fill="#cfa877"/>`;
+  for (let x = HB.l; x <= HB.r; x += 36) room += `<path d="M${x},${HB.b} L${hat(x, HB.b, K).map((v) => v.toFixed(1)).join(',')}" stroke="#a7804f" stroke-width="0.6" opacity="0.7"/>`;
+  room += `<rect x="${HB.l}" y="${HB.t}" width="${HB.r - HB.l}" height="${HB.b - HB.t}" fill="#ece0cc" stroke="${INK}" stroke-width="1.4"/>`;
+  // skirting + ceiling trim
+  room += `<line x1="${HB.l}" y1="${HB.b - 14}" x2="${HB.r}" y2="${HB.b - 14}" stroke="${INK}" stroke-width="0.7"/>`;
+  for (const [a, b] of [[tl, hat(...tl, K)], [tr, hat(...tr, K)], [bl, hat(...bl, K)], [br, hat(...br, K)]])
+    room += `<path d="M${a.join(',')} L${b.map((v) => v.toFixed(1)).join(',')}" stroke="${INK}" stroke-width="1.4"/>`;
+  room += `<path d="M${hat(HB.l, HB.b - 14, 1).join(',')} L${hat(HB.l, HB.b - 14, K).map((v) => v.toFixed(1)).join(',')}" stroke="${INK}" stroke-width="0.7"/>`;
+  room += `<path d="M${hat(HB.r, HB.b - 14, 1).join(',')} L${hat(HB.r, HB.b - 14, K).map((v) => v.toFixed(1)).join(',')}" stroke="${INK}" stroke-width="0.7"/>`;
+
+  // tall window on the left wall with sheer curtains
+  const wk1 = 1.35, wk2 = 2.7;
+  const win = [hat(HB.l, HB.t + 40, wk1), hat(HB.l, HB.t + 40, wk2), hat(HB.l, HB.b - 40, wk2), hat(HB.l, HB.b - 40, wk1)];
+  room += `<path d="${P(win)}" fill="url(#hDay)" stroke="${INK}" stroke-width="1.6"/>`;
+  for (const k of [1.8, 2.25]) room += `<path d="M${hat(HB.l, HB.t + 40, k).map((v) => v.toFixed(1)).join(',')} L${hat(HB.l, HB.b - 40, k).map((v) => v.toFixed(1)).join(',')}" stroke="${INK}" stroke-width="1"/>`;
+  room += `<path d="M${hat(HB.l, HB.t + 200, wk1).join(',')} L${hat(HB.l, HB.t + 200, wk2).join(',')}" stroke="${INK}" stroke-width="0.8"/>`;
+  for (const [k1, k2] of [[1.25, 1.55], [2.6, 3.05]]) {
+    const c = [hat(HB.l, HB.t + 26, k1), hat(HB.l, HB.t + 26, k2), hat(HB.l, HB.b - 10, k2), hat(HB.l, HB.b - 10, k1)];
+    room += `<path d="${P(c)}" fill="#fbf7ee" opacity="0.8" stroke="#b9ab95" stroke-width="0.8"/>`;
+  }
+  // daylight falling across the floor
+  const lp = [hat(HB.l, HB.b, wk1 + 0.1), hat(HB.l, HB.b, wk2 - 0.1), hat(HB.l + 300, HB.b, wk2 + 0.1), hat(HB.l + 280, HB.b, wk1 + 0.3)];
+  room += `<path d="${P(lp)}" fill="#fff4dc" opacity="0.3"/>`;
+
+  // sideboard + plant on the right
+  const sb = (y, k) => hat(HB.r, y, k);
+  room += `<path d="${P([sb(HB.b - 120, 1.6), sb(HB.b - 120, 2.5), sb(HB.b, 2.5), sb(HB.b, 1.6)])}" fill="#b98f62" stroke="${INK}" stroke-width="1"/>`;
+  room += `<path d="${P([sb(HB.b - 120, 1.6), sb(HB.b - 120, 2.5), hat(HB.r - 60, HB.b - 120, 2.5), hat(HB.r - 60, HB.b - 120, 1.6)])}" fill="#cfa877" stroke="${INK}" stroke-width="1"/>`;
+  const pot = [0, 0];
+  let leaves = '';
+  for (let i = 0; i < 14; i++) {
+    const a = rad(-160 + i * 10 + j(6)), len = 90 + rnd() * 70;
+    const ex = pot[0] + Math.cos(a) * len, ey = pot[1] - 120 + Math.sin(a) * len;
+    leaves += `<path d="M${pot[0]},${pot[1] - 110} Q${(pot[0] + ex) / 2 + j(30)},${(pot[1] - 110 + ey) / 2 - 20} ${ex.toFixed(1)},${ey.toFixed(1)}" stroke="#4d6b4a" stroke-width="${3 + rnd() * 3}" fill="none" stroke-linecap="round"/>`;
+    leaves += `<ellipse cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" rx="${(16 + rnd() * 8).toFixed(1)}" ry="7" transform="rotate(${(a * 180 / Math.PI).toFixed(0)} ${ex.toFixed(1)} ${ey.toFixed(1)})" fill="${rnd() > 0.5 ? '#6c8c5f' : '#587a4f'}" stroke="${INK}" stroke-width="0.5"/>`;
+  }
+  const pc = hat(HB.r - 70, HB.b, 1.12);
+  const plant = `<g transform="translate(${pc[0].toFixed(1)} ${pc[1].toFixed(1)}) scale(0.62)">${leaves}<path d="M${pot[0] - 46},${pot[1] - 110} L${pot[0] + 46},${pot[1] - 110} L${pot[0] + 34},${pot[1]} L${pot[0] - 34},${pot[1]} Z" fill="#c9b7a0" stroke="${INK}" stroke-width="1"/></g>`;
+
+  // rug + table + chairs
+  const T = { x: 960, y: 690, rx: 290, ry: 82 };
+  const rug = `<ellipse cx="960" cy="900" rx="560" ry="150" fill="#e9e0cf" stroke="#b7a68c" stroke-width="1"/>
+    <ellipse cx="960" cy="900" rx="520" ry="132" fill="none" stroke="#c9b99f" stroke-width="1" stroke-dasharray="3 5"/>`;
+  const seats = [];
+  for (let i = 0; i < 10; i++) {
+    const a = rad(i * 36 + 18);
+    const sn = Math.sin(a);
+    seats.push({ x: T.x + Math.cos(a) * (T.rx + 40), y: sn > 0.35 ? T.y + sn * (T.ry + 40) : T.y + sn * T.ry * 0.9 + 28, s: 1 + sn * 0.3, front: sn > 0.35, sn });
+  }
+  const backChairs = seats.filter((c) => !c.front).sort((a, b) => a.sn - b.sn).map((c) => chair(c.x, c.y, c.s, false)).join('');
+  const frontChairs = seats.filter((c) => c.front).sort((a, b) => a.sn - b.sn).map((c) => chair(c.x, c.y + 40, c.s, true)).join('');
+  let items = '';
+  for (let i = 0; i < 10; i++) {
+    const a = rad(i * 36 + 18);
+    const px = T.x + Math.cos(a) * T.rx * 0.74, py = T.y + Math.sin(a) * T.ry * 0.74;
+    items += `<g transform="translate(${px.toFixed(1)} ${py.toFixed(1)}) scale(1 0.32) rotate(${(i * 36 + 18 + 90).toFixed(0)})"><rect x="-17" y="-24" width="34" height="46" fill="#fbf8f1" stroke="${INK}" stroke-width="1.6"/><line x1="-10" y1="-10" x2="10" y2="-10" stroke="#9aa7b2" stroke-width="2"/><line x1="-10" y1="0" x2="8" y2="0" stroke="#9aa7b2" stroke-width="2"/></g>`;
+    const gx = T.x + Math.cos(a + 0.22) * T.rx * 0.6, gy = T.y + Math.sin(a + 0.22) * T.ry * 0.6;
+    items += `<path d="M${(gx - 6).toFixed(1)},${(gy - 18).toFixed(1)} L${(gx - 5).toFixed(1)},${gy.toFixed(1)} L${(gx + 5).toFixed(1)},${gy.toFixed(1)} L${(gx + 6).toFixed(1)},${(gy - 18).toFixed(1)}" fill="#e3f0f3" fill-opacity="0.7" stroke="#5f7380" stroke-width="0.8"/>`;
+  }
+  const table = `
+    <path d="M${T.x - 40},${T.y + 20} L${T.x - 28},${T.y + 200} L${T.x + 28},${T.y + 200} L${T.x + 40},${T.y + 20} Z" fill="#9b7046" stroke="${INK}" stroke-width="1"/>
+    <ellipse cx="${T.x}" cy="${T.y + 202}" rx="120" ry="24" fill="#8a6340" stroke="${INK}" stroke-width="1"/>
+    <path d="M${T.x - T.rx},${T.y} L${T.x - T.rx},${T.y + 16} A${T.rx},${T.ry} 0 0 0 ${T.x + T.rx},${T.y + 16} L${T.x + T.rx},${T.y} Z" fill="#a8794b" stroke="${INK}" stroke-width="1.2"/>
+    <ellipse cx="${T.x}" cy="${T.y}" rx="${T.rx}" ry="${T.ry}" fill="url(#hOak)" stroke="${INK}" stroke-width="1.4"/>
+    <ellipse cx="${T.x}" cy="${T.y}" rx="${T.rx * 0.55}" ry="${T.ry * 0.5}" fill="#fff3d2" opacity="0.4"/>
+    ${items}`;
+
+  // the halo itself: a thin ring pendant, glowing
+  const L0 = { x: 960, y: 330, rx: 270, ry: 52 };
+  const ring = `
+    <ellipse cx="${L0.x}" cy="${L0.y}" rx="${L0.rx}" ry="${L0.ry}" fill="none" stroke="#fff1c4" stroke-width="34" opacity="0.55" filter="url(#hBlur)"/>
+    <g filter="url(#ink)">
+      ${[-0.8, 0, 0.8].map((f) => `<line x1="${L0.x + f * L0.rx}" y1="${HB.t - 170 + Math.abs(f) * 40}" x2="${L0.x + f * L0.rx}" y2="${L0.y + (f ? L0.ry * 0.6 : -L0.ry)}" stroke="${INK}" stroke-width="0.8"/>`).join('')}
+      <ellipse cx="${L0.x}" cy="${L0.y}" rx="${L0.rx}" ry="${L0.ry}" fill="none" stroke="${INK}" stroke-width="12"/>
+      <ellipse cx="${L0.x}" cy="${L0.y}" rx="${L0.rx}" ry="${L0.ry}" fill="none" stroke="#fffaf0" stroke-width="8"/>
+      <ellipse cx="${L0.x}" cy="${L0.y + 2}" rx="${L0.rx}" ry="${L0.ry}" fill="none" stroke="#ffe9a8" stroke-width="3"/>
+    </g>`;
+
+  const vbx = (1920 - W) / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbx} 0 ${W} ${H}" width="${W}" height="${H}">
+  ${defs.replace('</defs>', `
+    <linearGradient id="hSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d8fbf"/><stop offset="0.6" stop-color="#a9c8e2"/><stop offset="1" stop-color="#eef2f2"/></linearGradient>
+    <radialGradient id="hSun"><stop offset="0" stop-color="#fffdf3" stop-opacity="1"/><stop offset="0.35" stop-color="#fff6dc" stop-opacity="0.7"/><stop offset="1" stop-color="#fff6dc" stop-opacity="0"/></radialGradient>
+    <linearGradient id="hDay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bcd8ea"/><stop offset="0.7" stop-color="#e8f1f1"/><stop offset="1" stop-color="#c5d3b4"/></linearGradient>
+    <radialGradient id="hOak" cx="45%" cy="40%" r="70%"><stop offset="0" stop-color="#e2b884"/><stop offset="1" stop-color="#bf8f5b"/></radialGradient>
+    <radialGradient id="hWarm" cx="50%" cy="35%" r="60%"><stop offset="0" stop-color="#fff2cc" stop-opacity="0.22"/><stop offset="1" stop-color="#fff2cc" stop-opacity="0"/></radialGradient>
+    <filter id="hBlur" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>`)}
+  <rect x="-200" width="2400" height="1200" fill="#efe6d1"/>
+  <g filter="url(#ink)">${room}${haloPhoto(800, 330, 320, 210)}</g>
+  <rect x="-200" width="2400" height="1200" fill="url(#hWarm)"/>
+  <g filter="url(#ink)">${rug}</g>
+  ${backChairs}
+  <g filter="url(#ink)">${table}</g>
+  ${frontChairs}
+  <g filter="url(#ink)">${plant}</g>
+  ${ring}
+  <rect x="-200" width="2400" height="1200" filter="url(#blotch)" opacity="0.6"/>
+  <rect x="-200" width="2400" height="1200" filter="url(#grain)"/>
+  ${withTitle ? `
+  <rect x="${960 - 260}" y="${H - 150}" width="520" height="118" fill="#f7ebcf" stroke="${INK}" stroke-width="1"/>
+  <rect x="${960 - 252}" y="${H - 142}" width="504" height="102" fill="none" stroke="${INK}" stroke-width="0.5"/>
+  <text x="960" y="${H - 86}" text-anchor="middle" font-family="Cinzel" font-size="50" letter-spacing="18" fill="${INK}">HALO</text>
+  <text x="960" y="${H - 54}" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="24" fill="${INK}">the meeting room &#183; light shared by many</text>` : ''}
+  <rect x="${vbx + 28}" y="28" width="${W - 56}" height="${H - 56}" fill="none" stroke="${INK}" stroke-width="1.3" opacity="0.8"/>
+  <rect x="${vbx + 38}" y="38" width="${W - 76}" height="${H - 76}" fill="none" stroke="${INK}" stroke-width="0.5" opacity="0.6"/>
+</svg>`;
+}
+
 const page = (svg, w, h) =>
   `<!doctype html><html><head><meta charset="utf-8"><style>${fontFaces}html,body{margin:0;background:#e9ddc2}.ns *{vector-effect:non-scaling-stroke}svg{display:block}</style></head><body>${svg}</body></html>`;
 
@@ -445,6 +614,14 @@ jobs.push(
   ['atlas-ballroom-colour-wide-plain.png', ballroom(1920, 1080, false), 1920, 1080],
   ['atlas-ballroom-colour-square.png', ballroom(1080, 1080, true), 1080, 1080],
 );
+seed = 21;
+jobs.push(
+  ['halo-meeting-wide.png', haloRoom(1920, 1080, true), 1920, 1080],
+  ['halo-meeting-wide-plain.png', haloRoom(1920, 1080, false), 1920, 1080],
+  ['halo-meeting-square.png', haloRoom(1080, 1080, true), 1080, 1080],
+);
+const only = process.argv[2];
+if (only) jobs.splice(0, jobs.length, ...jobs.filter((x) => x[0].startsWith(only)));
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 for (const [name, svg, w, h] of jobs) {
